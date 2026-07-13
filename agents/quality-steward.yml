@@ -1,0 +1,197 @@
+name: Quality & Docs Steward
+
+# Runs the quality-steward agent (.claude/agents/quality-steward.md) headless via
+# the official Claude Code action:
+#   - on every PR     → differential review, inline PR comments
+#   - weekly          → full sweep over the week's merged commits: an auto-fix PR
+#                       for safe mechanical fixes, issues for risky findings, a doc refresh
+#   - on demand       → workflow_dispatch (mode: steward | verify)
+#
+# The autonomy contract lives in the agent prompt: safe fixes go through a PR (never
+# a direct push to the default branch); risky findings are only suggested.
+#
+# ── SETUP (one-time) ─────────────────────────────────────────────────────────────
+#  1. Auth with your Claude subscription (Max/Pro) so CI bills the subscription, not
+#     a separate API key:
+#       a. locally: `claude setup-token` → copy the printed one-year OAuth token
+#       b. add it as an Actions secret `CLAUDE_CODE_OAUTH_TOKEN` (repo, or org with
+#          this repo in the access list)
+#       ⚠ do NOT also set `ANTHROPIC_API_KEY` — it takes precedence and overrides
+#         the subscription token. Regenerate the token yearly.
+#  2. Track the agent file: if `.claude/` is gitignored, un-ignore `.claude/agents/`
+#     so CI can check the definition out (`.claude/*` + `!.claude/agents/`).
+#  3. Adjust the runtime steps below for your stack (this template assumes Node/npm).
+#
+# `id-token: write` is REQUIRED — the action uses GitHub OIDC during auth.
+# The built-in GITHUB_TOKEN covers PR comments, issues, and pushes.
+
+on:
+  pull_request:
+  schedule:
+    - cron: '0 7 * * 1' # Mondays 07:00 UTC (offset after any metrics job so trends are fresh)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'steward = full run · verify = auth-only health check (no side effects)'
+        type: choice
+        options: [steward, verify]
+        default: steward
+
+permissions:
+  contents: write       # commit the steward auto-fix branch; push docs
+  pull-requests: write  # open the auto-fix PR; post review comments
+  issues: write         # open issues for risky findings (weekly sweep)
+  id-token: write       # REQUIRED: claude-code-action uses GitHub OIDC during auth
+
+concurrency:
+  # One steward per ref; a newer push supersedes an in-flight run.
+  group: steward-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Zero-side-effect health check: authenticate the subscription token and return.
+  # Trigger via: Actions → Quality & Docs Steward → Run workflow → mode: verify.
+  verify:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'verify'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify CLAUDE_CODE_OAUTH_TOKEN
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: 'Reply with exactly: AUTH OK. Use no tools.'
+          claude_args: '--max-turns 1'
+
+  steward:
+    if: github.event_name != 'workflow_dispatch' || inputs.mode == 'steward'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }} # available to the agent's Bash for gh + doc git pushes
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so the weekly sweep can diff <last-sweep-sha>...HEAD
+
+      # --- Stack setup: adjust for your project (Node/npm shown) -----------------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+
+      - name: Install the composed skills + agent definition from canonical
+        # Headless CI loads PROJECT skills (./.claude/skills/<name>/SKILL.md) and the
+        # agent def (./.claude/agents/<name>.md). Both are pulled from the canonical
+        # quality-steward repo at runtime, so the consuming repo commits NOTHING but
+        # this workflow — the canonical version stays the single source of truth.
+        #
+        # The steward composes six skills: code-review is built into Claude Code; the
+        # other five (code-health, code-quality, code-readability, security-audit,
+        # github) plus the shared wiki-publish substrate are vendored here.
+        #
+        # SUPPLY-CHAIN: pin SKILLS_REF to a reviewed commit. The steward runs with
+        # contents/PR/issues:write + the OAuth token, so fetching the live branch
+        # would let a compromised upstream execute inside it. Bump intentionally
+        # after reviewing the upstream diff.
+        env:
+          SKILLS_REF: main # ⚠ pin to a reviewed commit SHA before you rely on this
+        run: |
+          git clone --filter=blob:none https://github.com/PrairieAster-Ai/quality-steward.git /tmp/qs
+          git -C /tmp/qs checkout --quiet "$SKILLS_REF"
+          mkdir -p .claude/skills .claude/agents
+          for s in code-health code-quality code-readability security-audit github wiki-publish; do
+            cp -r "/tmp/qs/skills/$s" .claude/skills/
+          done
+          cp /tmp/qs/agents/quality-steward.md .claude/agents/quality-steward.md
+
+      # Durable sweep marker: read the last-sweep SHA from the steward-state branch so
+      # each weekly sweep resumes from where the last one ended. CI runners are
+      # ephemeral, so agent memory does NOT persist across runs — this branch is the
+      # source of truth. Falls back to a bounded HEAD~20 on the first run (the branch
+      # is created by the "Persist sweep marker" step below — self-bootstrapping).
+      - name: Resolve sweep range
+        id: range
+        if: github.event_name != 'pull_request'
+        run: |
+          RANGE="HEAD~20...HEAD"
+          if git fetch --depth 1 origin steward-state 2>/dev/null; then
+            LAST="$(git show FETCH_HEAD:last-sweep-sha 2>/dev/null | tr -d '[:space:]')"
+            if [ -n "$LAST" ] && git cat-file -e "${LAST}^{commit}" 2>/dev/null; then
+              RANGE="${LAST}...HEAD"
+            fi
+          fi
+          echo "range=$RANGE" >> "$GITHUB_OUTPUT"
+          echo "Sweep range: $RANGE"
+
+      - name: Build the run instruction from the trigger
+        id: mode
+        # github/step context is passed via env (referenced as $VARS), never
+        # interpolated directly into the shell — avoids script injection.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.base_ref }}
+          SWEEP_RANGE: ${{ steps.range.outputs.range }}
+          # The canonical agent def is project-agnostic; supply YOUR project's knobs here
+          # (the "Configure for your project" values) so the agent has them at runtime.
+          # EDIT THIS for your repo (metric command, green-gate, auto-fixable surface,
+          # doc-publish flow). Example for a Node project:
+          PROJECT_CONFIG: >-
+            Project config — metric command: `npm run codehealth:report` (read deltas vs the previous reading);
+            green-gate: `npm run lint && npm run type-check`;
+            auto-fixable surface: `/code-readability annotate`, lint --fix, formatter;
+            doc-publish flow: your stamp/publish scripts, e.g. `/code-readability publish`/`team`.
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            echo "instruction=${PROJECT_CONFIG} Run as the quality-steward in PER-PR mode. Review the diff of PR #${PR_NUMBER} (origin/${BASE_REF}...HEAD). Post inline PR comments for risky findings; open an auto-fix PR ONLY for safe, behavior-preserving mechanical fixes. Never push to the default branch." >> "$GITHUB_OUTPUT"
+          else
+            echo "instruction=${PROJECT_CONFIG} Run as the quality-steward in WEEKLY SWEEP mode. Review git diff ${SWEEP_RANGE} (the commits merged since the last sweep). Open GitHub issues for risky findings, an auto-fix PR for safe mechanical fixes, and refresh the project docs via the configured doc-publish flow (publish only if the code surface changed)." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run the steward
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: ${{ steps.mode.outputs.instruction }}
+          # --agent loads the checked-out definition; the allowlist covers the tools
+          # the steward needs to run scripts, edit, and talk to GitHub. If Bash gets
+          # blocked under acceptEdits, swap to --dangerously-skip-permissions (safe on
+          # an ephemeral runner; the agent's guardrails forbid pushing to the default branch).
+          claude_args: >-
+            --agent quality-steward
+            --permission-mode acceptEdits
+            --max-turns 80
+            --allowedTools Bash,Read,Write,Edit,Grep,Glob,Skill
+
+      # Persist the new marker only after a successful sweep, so the next run resumes
+      # from here. Lives on a dedicated `steward-state` branch (never the default
+      # branch — honors the agent's no-push-to-default guardrail) and uses the
+      # built-in token (contents: write). Self-bootstraps the branch on first run.
+      - name: Persist sweep marker
+        if: success() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # github context via env (referenced as $VARS), never interpolated into the
+          # shell directly — avoids script injection.
+          HEAD_SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          # HEAD_SHA is the immutable commit the workflow ran against — NOT
+          # `git rev-parse HEAD`, which reflects whatever the steward left the working
+          # tree on (auto-fix branch, checkouts during review) and would persist the wrong SHA.
+          D="$(mktemp -d)"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          if ! git clone --depth 1 --branch steward-state "$REMOTE" "$D" 2>/dev/null; then
+            git clone --depth 1 "$REMOTE" "$D"
+            git -C "$D" checkout --orphan steward-state
+            git -C "$D" rm -rf . >/dev/null 2>&1 || true
+          fi
+          echo "$HEAD_SHA" > "$D/last-sweep-sha"
+          git -C "$D" add last-sweep-sha
+          git -C "$D" -c user.name='github-actions[bot]' -c user.email='github-actions[bot]@users.noreply.github.com' \
+            commit -m "chore(steward): last-sweep marker ${HEAD_SHA}" || { echo "marker unchanged"; exit 0; }
+          git -C "$D" push origin steward-state

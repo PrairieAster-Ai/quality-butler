@@ -1,0 +1,31 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Code-health generated artifacts (the durable trend lives on the steward-state
+# branch, never the default branch — see skills/code-health/SKILL.md)
+code-health/*.tsv
+code-health/*.json
+code-health/*-table.md
+
+# Claude Code local state (the workflow installs skills/agent at runtime)
+.claude/skills/
+.claude/agents/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+*.tmp
+.cache/
