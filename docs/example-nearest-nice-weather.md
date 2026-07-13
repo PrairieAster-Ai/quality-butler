@@ -1,7 +1,7 @@
 # The steward on a real project: nearestniceweather
 
 This is the quality-steward running unattended on a live repository —
-[**PrairieAster-Ai/nearest-nice-weather**](https://github.com/PrairieAster-Ai/nearest-nice-weather),
+**PrairieAster-Ai/nearest-nice-weather**,
 a Minnesota outdoor-recreation weather app. Every number and PR reference below is real, pulled
 from the repo on **2026-07-13**. It's a deliberately modest, single-maintainer project — which is
 the point: **a mature quality practice is about the discipline, and it scales down to a team of
@@ -18,7 +18,7 @@ with heavy bot assistance (Dependabot plus the steward itself).
 ## The headline: CodeHealth A · 94 / 100
 
 The most recent reading rolls up to an **A (94/100)**, published to the live
-[**Code Health Dashboard**](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Code-Health-Dashboard)
+**Code Health Dashboard**
 the steward maintains on the project wiki. The component breakdown shows exactly the body-and-tail
 story the [methodology](metrics.md#why-a-proportion-not-a-mean) is built around:
 
@@ -64,49 +64,47 @@ ranking misses.
 
 ## The steward at work
 
-The steward was installed in **[PR #311](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/311)**
+The steward was installed in **PR #311**
 (merged 2026-06-29) and has run on every PR and every Monday sweep since — the latest scheduled
 full sweep completed **2026-07-13**. What it has actually done splits cleanly along the
-[autonomy contract](technical.md#the-autonomy-contract). *(Browse them all:
-[every `steward/*` pull request](https://github.com/PrairieAster-Ai/nearest-nice-weather/pulls?q=is%3Apr+head%3Asteward).)*
+[autonomy contract](technical.md#the-autonomy-contract).
 
 **Safe, mechanical work → auto-fix PRs it opened and a human merged:**
 
-- **[#315](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/315)** — removed ~350 LOC
+- **#315** — removed ~350 LOC
   of dead code (an unused dependency and a stale manager).
-- **[#316](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/316) / #319** — raised
+- **#316 / #319** — raised
   TSDoc coverage across services, components, utils, and config.
 - **#317 / #318** — added test coverage for untested services, hooks, and UI components.
-- **[#322](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/322)** — instrumented the
+- **#322** — instrumented the
   code-health metrics and wired the weekly CI trend.
-- **[#324](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/324)** — refactored
+- **#324** — refactored
   `MapContainer`'s effects into hooks, moving the score **B → A (92.7)** — a documented,
   before-and-after improvement on the exact hotspot the metrics flagged.
-- **[#328](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/328)** — simplified
+- **#328** — simplified
   `useMapPopupNavigation` and tightened the complexity ratchets.
-- **[#333](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/333)** — added a
+- **#333** — added a
   dev-onboarding pass (a `doctor` + `bootstrap` flow for new contributors — see
   [Onboarding, kept current](#onboarding-kept-current) below).
 
 **Non-trivial findings → GitHub issues it filed for a human to decide** (never auto-edited):
 
-- **[#342](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/342)** *(open, `bug`)* —
+- **#342** *(open, `bug`)* —
   `dev-start.mjs`: a process-group kill gated on the wrong flag.
-- **[#343](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/343)** *(open, `bug`)* —
+- **#343** *(open, `bug`)* —
   `mapPopup.ts`: an unchecked `as number` cast on nullable precipitation that bypasses the
   null-guard used for the sibling fields.
 
 Both were opened by the **2026-07-06 weekly sweep** — textbook examples of the steward correctly
 declining to touch logic and instead surfacing it. It also files issues about its *own* pipeline
-when it drifts (**[#331](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/331)**,
-since fixed): the steward is subject to the same review it applies.
+when it drifts (**#331**, since fixed): the steward is subject to the same review it applies.
 
 **Durable memory across ephemeral runners.** The trend and the last-swept commit live on the
-[**`steward-state` branch**](https://github.com/PrairieAster-Ai/nearest-nice-weather/tree/steward-state)
+**`steward-state` branch**
 (the `code-health/*` history TSVs, `codehealth-stamp.json`, and a `last-sweep-sha` marker), so
 each weekly sweep resumes exactly where the last ended — without the agent ever pushing to the
 default branch. The steward runs from
-[**`.github/workflows/quality-steward.yml`**](https://github.com/PrairieAster-Ai/nearest-nice-weather/blob/main/.github/workflows/quality-steward.yml).
+**`.github/workflows/quality-steward.yml`**.
 
 ## Beyond code health: the app measures its own reliability
 
@@ -125,33 +123,10 @@ instrumentation — the same discipline the steward keeps applied to the code.**
 ## Onboarding, kept current
 
 The same "keep the docs true" discipline extends to getting a new contributor productive. Via the
-dev-onboarding pass ([PR #333](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/333)),
+dev-onboarding pass (PR #333),
 the project ships a read-only **`doctor`** (detects missing tools/versions/secrets and prints the
 exact fix) and an idempotent **`bootstrap`** (install → env → seed → run), plus onboarding pages
-that stay in sync with the actual scripts and dependencies rather than drifting:
-
-- [**Getting-Started**](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Getting-Started)
-  and [**Developer-Quick-Start**](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Developer-Quick-Start)
-  — fresh clone → running localhost.
-- [**Skill-Inventory**](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Skill-Inventory)
-  — the team competency matrix.
-- The [`doctor`](https://github.com/PrairieAster-Ai/nearest-nice-weather/blob/main/.claude/skills/dev-onboarding/scripts/doctor.mjs)
-  and [`bootstrap`](https://github.com/PrairieAster-Ai/nearest-nice-weather/blob/main/.claude/skills/dev-onboarding/scripts/bootstrap.mjs)
-  scripts themselves.
-
-## Explore the artifacts
-
-Everything above is public — see the steward for yourself:
-
-| Artifact | Link |
-|---|---|
-| The workflow that runs it | [`quality-steward.yml`](https://github.com/PrairieAster-Ai/nearest-nice-weather/blob/main/.github/workflows/quality-steward.yml) |
-| Every auto-fix PR it opened | [`head:steward` pull requests](https://github.com/PrairieAster-Ai/nearest-nice-weather/pulls?q=is%3Apr+head%3Asteward) |
-| Findings it escalated | issues [#342](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/342) · [#343](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/343) |
-| The published health dashboard | [Code Health Dashboard](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Code-Health-Dashboard) |
-| Its durable memory | [`steward-state` branch](https://github.com/PrairieAster-Ai/nearest-nice-weather/tree/steward-state) |
-| Onboarding it keeps current | [Getting-Started](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Getting-Started) |
-| The whole repo | [PrairieAster-Ai/nearest-nice-weather](https://github.com/PrairieAster-Ai/nearest-nice-weather) |
+that stay in sync with the actual scripts and dependencies rather than drifting.
 
 ## The takeaway
 

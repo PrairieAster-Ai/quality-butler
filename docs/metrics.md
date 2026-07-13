@@ -47,7 +47,7 @@ catch that: a capability you have but never enabled.)
 A single **0–100 score with a letter grade (A–F)** over six dimensions. Each dimension is
 normalized against documented anchors — `norm(v, good, bad) = clamp((v − bad) / (good − bad) · 100)`
 — then weighted. The roll-up is deliberately transparent (every input is a metric you can
-reproduce), inspired by [CodeScene's CodeHealth](https://codescene.com/product/behavioral-code-analysis)
+reproduce), inspired by CodeScene's CodeHealth
 but with the formula fully in the open.
 
 | Dimension | Weight | Anchors (good → 100, poor → 0) |
@@ -70,16 +70,14 @@ keeps them separate.
 
 The Maintainability Index mean is famously misleading: because it's heavily penalized by raw
 lines of code and complexity follows a power law, the average is always dragged down by file
-length and hides the few files that cause real pain (van Deursen,
-[Think twice before using the Maintainability Index](https://avandeursen.com/2014/08/29/think-twice-before-using-the-maintainability-index/);
-[arXiv:2307.12082](https://arxiv.org/abs/2307.12082)). So CodeHealth aggregates the way CodeScene
+length and hides the few files that cause real pain (van Deursen; arXiv:2307.12082). So CodeHealth aggregates the way CodeScene
 does: a weighted **proportion of healthy code** plus a separate **lowest-module** KPI. "What
 fraction of files are green" is a stable, honest signal; "the average MI" is not.
 
 ## The metrics, and what each is for
 
 **Maintainability Index (MI)** — `MAX(0, (171 − 5.2·ln(V) − 0.23·CC − 16.2·ln(SLOC)) · 100/171)`
-([Microsoft](https://learn.microsoft.com/en-us/visualstudio/code-quality/code-metrics-maintainability-index-range-and-meaning)),
+(Microsoft),
 where `V` is Halstead Volume and `CC` cyclomatic complexity. Bands: 0–9 red · 10–19 yellow ·
 20–100 green. Over-penalizes LOC, so read it as a **direction**, not an absolute — which is
 exactly why the roll-up uses the *proportion green*, not the raw value.
@@ -89,7 +87,7 @@ the minimum number of test cases. 1–10 simple · 11–15 moderate · 16–20 c
 
 **Cognitive Complexity (SonarSource)** — penalizes nesting and broken linear flow; tracks
 *readability*, not just testability. Best enforced as a CI gate
-([SonarSource](https://www.sonarsource.com/resources/cognitive-complexity/)).
+(SonarSource).
 
 **Coupling & instability** — per module: Afferent (`Ca`, incoming), Efferent (`Ce`, outgoing),
 and **Instability** `I = Ce / (Ce + Ca)` (0 = stable foundation, 1 = volatile leaf). Healthy
@@ -110,11 +108,11 @@ is overdue. Target < 2%.
 
 ## Sources
 
-- [Microsoft — Maintainability Index](https://learn.microsoft.com/en-us/visualstudio/code-quality/code-metrics-maintainability-index-range-and-meaning)
-- [SonarSource — Cognitive Complexity](https://www.sonarsource.com/resources/cognitive-complexity/)
-- [CodeScene — behavioral code analysis](https://codescene.com/product/behavioral-code-analysis)
-- [Software package metrics — coupling & instability](https://en.wikipedia.org/wiki/Software_package_metrics)
-- [van Deursen — Think twice before using the Maintainability Index](https://avandeursen.com/2014/08/29/think-twice-before-using-the-maintainability-index/)
+- Microsoft — Maintainability Index
+- SonarSource — Cognitive Complexity
+- CodeScene — behavioral code analysis
+- Software package metrics — coupling & instability
+- van Deursen — Think twice before using the Maintainability Index
 
 For the exact formulas, thresholds, and the dashboard layout, see
 [`skills/code-health/references/methodology.md`](../skills/code-health/references/methodology.md).

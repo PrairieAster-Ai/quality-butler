@@ -2,10 +2,9 @@
 
 **Turn code quality from an invisible liability into a metric you can govern by.**
 
-quality-steward is an autonomous [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
-agent that watches your codebase's health, fixes the safe things itself, escalates the non-trivial
-ones with evidence, and keeps your documentation current — on every pull request and every week,
-without anyone having to remember to do it.
+quality-steward is an autonomous Claude Code agent that watches your codebase's health, fixes the
+safe things itself, escalates the non-trivial ones with evidence, and keeps your documentation
+current — on every pull request and every week, without anyone having to remember to do it.
 
 It gives you one number that trends over time — a **CodeHealth grade** — and a running record of
 what was improved and what needs a decision. So "how healthy is our code, and is it getting better
@@ -61,6 +60,31 @@ automatically. No quality theater; just the actual history.
 > *The example project holds a steady **CodeHealth A (94/100)**, with the full component breakdown
 > and trend maintained without manual effort.*
 
+## Three ways teams use it
+
+The steward is built for one job — keep quality visible and maintained — but teams adopt it at
+three different points in a project's life:
+
+### 1. Onboard an existing codebase — find and pay down technical debt
+Point it at a project that's accumulated debt. It takes a **baseline** CodeHealth reading, ranks
+the hotspots worth fixing first (complex *and* frequently changed), **auto-fixes the safe debt**
+(dead code, formatting, documentation gaps) through pull requests, and **generates the
+documentation and dashboard** you never had time to write. You go from "we're not sure how bad it
+is" to a graded starting point, a cleanup already underway, and living docs — in days, not
+quarters.
+
+### 2. Wire it into CI/CD — define and maintain a quality standard
+Run it on every pull request to make your quality bar continuous instead of aspirational. It does
+a differential correctness and security review of the diff, comments inline where the change is
+being made, and holds **ratcheting gates** — coverage can't drop, complexity stays capped, no new
+circular imports. New work meets the standard *as it's written*, and the standard only tightens.
+
+### 3. Keep it running — long-term monitoring and up-to-date docs
+Left on the weekly schedule, it becomes standing maintenance: it **monitors the trend** and makes
+a regression the headline (the delta, not the raw number), catches decay early, and keeps the
+docs, API references, and onboarding guides **current as the code evolves**. Quality stays a
+background condition instead of a periodic fire drill.
+
 ## Safe by design
 
 An agent that can edit your code needs a hard boundary, and this is the whole point of the design:
@@ -83,14 +107,10 @@ leave running.
 
 ## See it on a real project
 
-[**The nearestniceweather case study**](docs/example-nearest-nice-weather.md) shows the steward
-running unattended on a live repository — its real grade, the hotspots it surfaced, and the actual
-pull requests and issues it opened. Or go straight to the source:
-
-- 📊 the live [**Code Health Dashboard**](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Code-Health-Dashboard) it publishes and keeps current
-- 🔧 [**every auto-fix pull request**](https://github.com/PrairieAster-Ai/nearest-nice-weather/pulls?q=is%3Apr+head%3Asteward) it has opened — including the [B→A refactor (#324)](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/324)
-- 🚩 the findings it escalated instead of touching: [#342](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/342) · [#343](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/343)
-- 🧑‍💻 the [**onboarding guide**](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Getting-Started) it keeps in sync with the code
+**[The nearestniceweather case study](docs/example-nearest-nice-weather.md)** shows the steward
+running unattended on a live repository — its real CodeHealth grade, the hotspots it surfaced, the
+pull requests it opened to pay down debt, the findings it escalated for a human to decide, and the
+dashboard and onboarding docs it keeps current.
 
 ## Learn more
 

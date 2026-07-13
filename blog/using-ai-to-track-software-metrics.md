@@ -20,7 +20,7 @@ tedious, easy to skip, and the first thing to go when a deadline looms.
 
 Which is exactly the kind of work that changed cost the moment capable AI agents arrived. This
 post is about what a *good* metric looks like, and then about handing the upkeep to an agent —
-using a small, real project as the running example: [nearestniceweather](https://github.com/PrairieAster-Ai/nearest-nice-weather),
+using a small, real project as the running example: nearestniceweather,
 a Minnesota weather app maintained by one person. If a metrics practice is worth anything, it
 should be worth it even at a team of one.
 
@@ -62,7 +62,7 @@ point.
 Keeping metrics alive is really four recurring jobs: **track** them, **maintain** the code
 against them, **document** the result, and **communicate** it to humans. Each is exactly the kind
 of judgment-plus-drudgery loop that a well-scoped agent handles well. The
-[quality-steward](https://github.com/PrairieAster-Ai/quality-steward) is one such agent — a
+quality-steward is one such agent — a
 Claude Code agent that runs on every pull request and on a weekly schedule. Here's how it maps to
 the four jobs, with what it's actually done on nearestniceweather.
 
@@ -100,17 +100,16 @@ alone. The steward's **autonomy contract** draws it like this:
   decide.
 
 On nearestniceweather that boundary produced, on the safe side: a PR
-[removing ~350 lines of dead code](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/315),
+removing ~350 lines of dead code,
 several PRs raising TSDoc and test coverage, and — the satisfying one —
-[**PR #324**](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/324), which refactored
+**PR #324**, which refactored
 the map container's effects into hooks and moved the score **B → A (92.7)**, targeting the exact
 hotspot the churn×complexity metric had flagged. The metric found the file; the agent did the
-boring refactor; a human clicked merge. ([Browse every auto-fix PR it
-opened.](https://github.com/PrairieAster-Ai/nearest-nice-weather/pulls?q=is%3Apr+head%3Asteward))
+boring refactor; a human clicked merge.
 
 And on the other side of that line, the same week's sweep filed two bug issues instead of touching anything —
-[#342](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/342) (a process-kill gated
-on the wrong flag) and [#343](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/343)
+#342 (a process-kill gated
+on the wrong flag) and #343
 (an unchecked `as number` cast on a nullable field that bypassed a null-guard). Neither is
 something you'd want an agent silently "fixing." Both are exactly what you want it *noticing*.
 
@@ -121,7 +120,7 @@ this is safe to leave running.
 
 Documentation rots because updating it is a separate chore from changing the code. The steward
 folds it into the same loop: it regenerates API docs from TSDoc, refreshes a
-[Code Health Dashboard](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Code-Health-Dashboard),
+Code Health Dashboard,
 and only publishes when the code surface actually changed. The metrics and the prose
 around them are stitched together with markers, so the numbers can't silently diverge from the
 words describing them. Documentation stops being a thing you remember to do and becomes a
@@ -158,6 +157,6 @@ still being taken next month.
 ---
 
 *The quality-steward agent, its bundled skills, and the full methodology are open source at
-[github.com/PrairieAster-Ai/quality-steward](https://github.com/PrairieAster-Ai/quality-steward).
+github.com/PrairieAster-Ai/quality-steward.
 Every figure in this post is a real reading from
-[nearestniceweather](https://github.com/PrairieAster-Ai/nearest-nice-weather) as of July 2026.*
+nearestniceweather as of July 2026.*
