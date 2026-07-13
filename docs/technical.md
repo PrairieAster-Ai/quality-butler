@@ -30,7 +30,8 @@ the shared `wiki-publish` substrate are bundled in this repo and installed at ru
 | **github** | Wiki + Projects plumbing (auth quirks handled) | where docs are published |
 
 `code-health` is the metrics engine behind the Monitor step. See
-[docs/metrics.md](metrics.md) for how the roll-up is computed.
+[docs/metrics.md](metrics.md) for how the roll-up is computed, and the
+[feature reference](features.md) for every mode, flag, gate, and output of each skill.
 
 ## The playbook
 

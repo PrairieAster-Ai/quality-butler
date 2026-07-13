@@ -3,6 +3,17 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [Unreleased]
+
+### Added
+
+- **`docs/features.md`** — a complete feature reference: every mode, command, flag, metric, gate,
+  and output across the agent and all six composed skills (code-health, code-review, security-audit,
+  code-quality, code-readability, github, wiki-publish).
+- **`docs/usage.md`** — step-by-step playbooks for the three use cases (onboard an existing
+  codebase; wire into CI/CD; long-term maintenance).
+- Cross-links from the README, `metrics.md`, and `technical.md` into the new references.
+
 ## [0.1.0] — 2026-07-13
 
 Initial public release. Extracted from the `PrairieAster-Ai/claude-code-skills`

@@ -106,6 +106,10 @@ refactor and add tests **here first**.
 **Duplication** — token-level clones; rising duplication is the early signal that a shared helper
 is overdue. Target < 2%.
 
+For the **complete metric table** — every metric measured, the tool or formula behind it, its
+thresholds, and which CodeHealth dimension it feeds — see the
+[feature reference](features.md#every-metric-it-measures).
+
 ## Sources
 
 - Microsoft — Maintainability Index

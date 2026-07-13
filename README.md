@@ -63,7 +63,8 @@ automatically. No quality theater; just the actual history.
 ## Three ways teams use it
 
 The steward is built for one job — keep quality visible and maintained — but teams adopt it at
-three different points in a project's life:
+three different points in a project's life. Each has a step-by-step playbook in the
+**[usage guide](docs/usage.md)**.
 
 ### 1. Onboard an existing codebase — find and pay down technical debt
 Point it at a project that's accumulated debt. It takes a **baseline** CodeHealth reading, ranks
@@ -115,8 +116,12 @@ dashboard and onboarding docs it keeps current.
 ## Learn more
 
 - **[Installation guide](INSTALL.md)** — set it up on your repo in a few minutes.
-- **[What good software metrics are](docs/metrics.md)** — the strategy behind *which* metrics are
-  worth tracking, and how the CodeHealth grade is computed.
+- **[Usage guide](docs/usage.md)** — step-by-step playbooks for the three use cases above.
+- **[Feature reference](docs/features.md)** — every capability of the agent and the six skills it
+  composes: modes, commands, gates, and outputs.
+- **[Metrics reference](docs/metrics.md)** — the strategy behind *which* metrics are worth
+  tracking, every metric measured with its definition and thresholds, and how the CodeHealth grade
+  is computed.
 - **[The steward on a real project](docs/example-nearest-nice-weather.md)** — the live example,
   with real numbers.
 - **[Technical documentation](docs/technical.md)** — architecture, the composed skills, the
