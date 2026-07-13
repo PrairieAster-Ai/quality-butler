@@ -98,7 +98,7 @@ jobs:
         # would let a compromised upstream execute inside it. Bump intentionally
         # after reviewing the upstream diff.
         env:
-          SKILLS_REF: 8669206da12c1804ec9d8df014c3865e734e535c # pinned to quality-steward v0.2.0; bump to take updates
+          SKILLS_REF: 56bf4c16f192168dad17abd6b6cb97173892251e # pinned to quality-steward v0.2.1; bump to take updates
         run: |
           git clone --filter=blob:none https://github.com/PrairieAster-Ai/quality-steward.git /tmp/qs
           git -C /tmp/qs checkout --quiet "$SKILLS_REF"
