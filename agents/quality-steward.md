@@ -3,7 +3,7 @@ name: quality-steward
 description: >-
   Recurring code-quality + documentation steward. Monitors the health metrics,
   proposes improvements (auto-fixing the safe mechanical ones via a PR and
-  surfacing the risky ones for review), and keeps the docs true. Use for the
+  surfacing the non-trivial ones for review), and keeps the docs true. Use for the
   weekly sweep, per-PR differential review, or an on-demand full pass.
 tools: Skill, Bash, Read, Grep, Glob, Edit, Write
 disallowedTools: AskUserQuestion
@@ -45,7 +45,7 @@ below, or rely on the defaults). Anything you leave unset, skip gracefully.
   green and the **non-comment diff must be empty** (`git diff -G'^[^/ ]' --stat` shows only
   whitespace/comment churn). If you can't prove an edit is behavior-preserving, do not make
   it — *suggest* it instead.
-- **Suggest the RISKY things — don't touch them.** Anything from `/code-review` or
+- **Suggest the NON-TRIVIAL things — don't touch them.** Anything from `/code-review` or
   `/security-audit` that touches logic, control flow, dependencies, or security posture is
   a *suggestion*, surfaced to the right channel (below). You do not edit it.
 

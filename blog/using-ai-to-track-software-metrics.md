@@ -86,7 +86,7 @@ the last ended. (And to be honest about limits: nearestniceweather has only a ha
 readings so far. A trend line needs time to earn its slope; the machinery is what matters
 early.)
 
-### 2. Maintain — fix the safe things, *suggest* the risky ones
+### 2. Maintain — fix the safe things, *suggest* the non-trivial ones
 
 This is where automating quality gets dangerous, and where the design matters most. An agent that
 edits your code needs a hard boundary between what it's allowed to change and what it must leave
@@ -99,13 +99,16 @@ alone. The steward's **autonomy contract** draws it like this:
   routed to a GitHub issue or an inline PR comment, with the evidence attached, for a human to
   decide.
 
-On nearestniceweather that boundary produced, on the safe side: a PR removing ~350 lines of dead
-code, several PRs raising TSDoc and test coverage, and — the satisfying one — **PR #324**, which
-refactored the map container's effects into hooks and moved the score **B → A (92.7)**, targeting
-the exact hotspot the churn×complexity metric had flagged. The metric found the file; the agent
-did the boring refactor; a human clicked merge.
+On nearestniceweather that boundary produced, on the safe side: a PR
+[removing ~350 lines of dead code](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/315),
+several PRs raising TSDoc and test coverage, and — the satisfying one —
+[**PR #324**](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/324), which refactored
+the map container's effects into hooks and moved the score **B → A (92.7)**, targeting the exact
+hotspot the churn×complexity metric had flagged. The metric found the file; the agent did the
+boring refactor; a human clicked merge. ([Browse every auto-fix PR it
+opened.](https://github.com/PrairieAster-Ai/nearest-nice-weather/pulls?q=is%3Apr+head%3Asteward))
 
-And on the risky side, the same week's sweep filed two bug issues instead of touching anything —
+And on the other side of that line, the same week's sweep filed two bug issues instead of touching anything —
 [#342](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/342) (a process-kill gated
 on the wrong flag) and [#343](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/343)
 (an unchecked `as number` cast on a nullable field that bypassed a null-guard). Neither is
@@ -117,8 +120,9 @@ this is safe to leave running.
 ### 3. Document — living docs and a dashboard that don't drift
 
 Documentation rots because updating it is a separate chore from changing the code. The steward
-folds it into the same loop: it regenerates API docs from TSDoc, refreshes a Code Health
-Dashboard, and only publishes when the code surface actually changed. The metrics and the prose
+folds it into the same loop: it regenerates API docs from TSDoc, refreshes a
+[Code Health Dashboard](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Code-Health-Dashboard),
+and only publishes when the code surface actually changed. The metrics and the prose
 around them are stitched together with markers, so the numbers can't silently diverge from the
 words describing them. Documentation stops being a thing you remember to do and becomes a
 byproduct of the sweep.
@@ -142,7 +146,7 @@ watching both the structural trend and the runtime signals can tell you when *ei
 It's worth being precise, because "AI-powered quality" invites the wrong mental model. The agent
 is not exercising taste about your architecture, and it's not a substitute for review. What it's
 doing is running the *upkeep loop* that humans reliably skip: take the reading, compute the delta,
-rank the hotspots, do the mechanical fixes, file the risky findings, refresh the docs, remember
+rank the hotspots, do the mechanical fixes, file the findings that need a human, refresh the docs, remember
 what it decided last week. The judgment about what's safe to touch is encoded up front in the
 contract; the judgment about what to *do* with a filed issue stays with you.
 

@@ -23,7 +23,7 @@ the shared `wiki-publish` substrate are bundled in this repo and installed at ru
 | Skill | Owns | Feeds the roll-up |
 |---|---|---|
 | **code-health** | Structural metrics (Maintainability Index, cyclomatic/cognitive complexity, churn×complexity hotspots, coupling/instability, change-coupling, duplication, circular imports) + the **CodeHealth roll-up** + the dashboard render/stamp/trend | Maintainability, Structure, Resilience, Type & size |
-| **code-review** *(built in)* | Correctness / bug review on a diff | risky suggestions |
+| **code-review** *(built in)* | Correctness / bug review on a diff | non-trivial suggestions |
 | **security-audit** | SAST · secrets · SCA on a diff, with LLM verification | Security |
 | **code-readability** | TSDoc-native comments + generated, cross-linked API docs | Documentation |
 | **code-quality** | Lint · type-check · coverage · sprint planning | test/coverage trend |
@@ -62,9 +62,9 @@ to a human.
   green, *and* the **non-comment diff is empty** (`git diff -G'^[^/ ]'` shows only
   whitespace/comment churn). If an edit can't be proven behavior-preserving, the steward suggests
   it instead of making it.
-- **Suggest the RISKY things — don't touch them.** Anything from `code-review` or `security-audit`
-  that touches logic, control flow, dependencies, or security posture is a *suggestion*, routed to
-  the right channel. The agent does not edit it.
+- **Suggest the NON-TRIVIAL things — leave them to a human.** Anything from `code-review` or
+  `security-audit` that touches logic, control flow, dependencies, or security posture is a
+  *suggestion*, routed to the right channel. The agent does not edit it.
 
 ## Run modes
 

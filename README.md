@@ -3,8 +3,8 @@
 **Turn code quality from an invisible liability into a metric you can govern by.**
 
 quality-steward is an autonomous [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
-agent that watches your codebase's health, fixes the safe things itself, escalates the risky ones
-with evidence, and keeps your documentation current — on every pull request and every week,
+agent that watches your codebase's health, fixes the safe things itself, escalates the non-trivial
+ones with evidence, and keeps your documentation current — on every pull request and every week,
 without anyone having to remember to do it.
 
 It gives you one number that trends over time — a **CodeHealth grade** — and a running record of
@@ -15,7 +15,7 @@ or worse?" becomes a question you can actually answer.
 
 ## Why this matters to the business
 
-Code quality decays silently. Nobody files a ticket for "this module is getting risky to change";
+Code quality decays silently. Nobody files a ticket for "this module is getting harder to change safely";
 you find out when a routine change causes an incident, when a feature that should take two days
 takes two weeks, or when the one engineer who understands a system leaves. By then the cost is
 already paid.
@@ -35,8 +35,8 @@ Every metric maps to a business outcome — and the steward doesn't just report 
 ### 🛡️ Lower risk from change
 Fewer incidents from routine work, and security issues caught in review instead of production.
 The steward reviews every pull request for correctness and security regressions, flags the files
-that are both complex *and* changed often (where bugs concentrate), and files the risky findings
-as tracked issues with the evidence attached.
+that are both complex *and* changed often (where bugs concentrate), and files the non-trivial
+findings as tracked issues with the evidence attached.
 > *On the [live example project](docs/example-nearest-nice-weather.md), the weekly sweep filed two
 > real bug reports — a resource-cleanup flaw and an unchecked type cast that bypassed a null-guard
 > — for a human to decide on, rather than silently editing logic it shouldn't touch.*
@@ -85,7 +85,12 @@ leave running.
 
 [**The nearestniceweather case study**](docs/example-nearest-nice-weather.md) shows the steward
 running unattended on a live repository — its real grade, the hotspots it surfaced, and the actual
-pull requests and issues it opened.
+pull requests and issues it opened. Or go straight to the source:
+
+- 📊 the live [**Code Health Dashboard**](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Code-Health-Dashboard) it publishes and keeps current
+- 🔧 [**every auto-fix pull request**](https://github.com/PrairieAster-Ai/nearest-nice-weather/pulls?q=is%3Apr+head%3Asteward) it has opened — including the [B→A refactor (#324)](https://github.com/PrairieAster-Ai/nearest-nice-weather/pull/324)
+- 🚩 the findings it escalated instead of touching: [#342](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/342) · [#343](https://github.com/PrairieAster-Ai/nearest-nice-weather/issues/343)
+- 🧑‍💻 the [**onboarding guide**](https://github.com/PrairieAster-Ai/nearest-nice-weather/wiki/Getting-Started) it keeps in sync with the code
 
 ## Learn more
 
