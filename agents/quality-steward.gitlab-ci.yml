@@ -12,7 +12,7 @@
 #
 # The autonomy contract lives in the agent prompt (agents/quality-steward.md):
 # safe fixes go through a branch + MR (never a push to the default branch);
-# risky findings are only suggested.
+# non-trivial findings are only suggested.
 #
 # ── SETUP (one-time) ─────────────────────────────────────────────────────────
 #  1. Auth with your Claude subscription (Max/Pro):
@@ -86,7 +86,7 @@ steward:mr:
       doc-publish flow: your stamp/publish scripts. \
       Run as the quality-steward in PER-PR mode. Review the diff of merge request \
       !${CI_MERGE_REQUEST_IID} (origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD). \
-      Post MR notes for risky findings via the GitLab REST API \
+      Post MR notes for non-trivial findings via the GitLab REST API \
       (\$CI_API_V4_URL/projects/\$CI_PROJECT_ID/merge_requests/\$CI_MERGE_REQUEST_IID/notes); \
       open an auto-fix branch + MR ONLY for safe, behavior-preserving mechanical fixes. \
       Never push to the default branch." \
@@ -128,7 +128,7 @@ steward:sweep:
       auto-fixable surface: \`/code-readability annotate\`, lint --fix, formatter; \
       doc-publish flow: your stamp/publish scripts. \
       Run as the quality-steward in WEEKLY SWEEP mode. Review git diff ${SWEEP_RANGE} \
-      (the commits merged since the last sweep). Open GitLab issues for risky findings via \
+      (the commits merged since the last sweep). Open GitLab issues for non-trivial findings via \
       \$CI_API_V4_URL/projects/\$CI_PROJECT_ID/issues, an auto-fix branch + MR for safe \
       mechanical fixes, and refresh the project docs via the configured doc-publish flow \
       (publish only if the code surface changed)." \

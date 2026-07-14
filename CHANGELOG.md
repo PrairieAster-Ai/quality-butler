@@ -79,10 +79,10 @@ collection into a self-contained repo.
 ### Added
 
 - **The `quality-steward` agent** (`agents/quality-steward.md`) — an orchestration agent that
-  monitors code-quality metrics, auto-fixes safe mechanical issues via a PR, surfaces risky
+  monitors code-quality metrics, auto-fixes safe mechanical issues via a PR, surfaces non-trivial
   findings as issues / inline PR comments, and keeps living docs in sync. Enforces an autonomy
   contract: safe fixes go through a `steward/auto-fix-*` PR (never a direct push to the default
-  branch); risky findings are only suggested.
+  branch); non-trivial findings are only suggested.
 - **The portable workflow** (`agents/quality-steward.yml`) — PR + weekly + on-demand triggers, a
   zero-side-effect `verify` mode, subscription-token auth (`CLAUDE_CODE_OAUTH_TOKEN`), the durable
   `steward-state` sweep marker, and pull-at-runtime install of the bundled skills.

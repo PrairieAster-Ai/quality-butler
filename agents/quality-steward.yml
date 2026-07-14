@@ -4,11 +4,11 @@ name: Quality & Docs Steward
 # the official Claude Code action:
 #   - on every PR     → differential review, inline PR comments
 #   - weekly          → full sweep over the week's merged commits: an auto-fix PR
-#                       for safe mechanical fixes, issues for risky findings, a doc refresh
+#                       for safe mechanical fixes, issues for non-trivial findings, a doc refresh
 #   - on demand       → workflow_dispatch (mode: steward | verify)
 #
 # The autonomy contract lives in the agent prompt: safe fixes go through a PR (never
-# a direct push to the default branch); risky findings are only suggested.
+# a direct push to the default branch); non-trivial findings are only suggested.
 #
 # ── SETUP (one-time) ─────────────────────────────────────────────────────────────
 #  1. Auth with your Claude subscription (Max/Pro) so CI bills the subscription, not
