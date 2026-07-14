@@ -21,7 +21,7 @@ All guides and reference material are in the **[project Wiki](https://github.com
 | | |
 |---|---|
 | **Get started** | [Installation](https://github.com/PrairieAster-Ai/quality-steward/wiki/Installation) · [Usage](https://github.com/PrairieAster-Ai/quality-steward/wiki/Usage) |
-| **Reference** | [Features](https://github.com/PrairieAster-Ai/quality-steward/wiki/Features) · [Metrics](https://github.com/PrairieAster-Ai/quality-steward/wiki/Metrics) · [Technical](https://github.com/PrairieAster-Ai/quality-steward/wiki/Technical) · [Language support](https://github.com/PrairieAster-Ai/quality-steward/wiki/Language-Support) · [CI portability](https://github.com/PrairieAster-Ai/quality-steward/wiki/CI-Portability) |
+| **Reference** | [Features](https://github.com/PrairieAster-Ai/quality-steward/wiki/Features) · [Metrics](https://github.com/PrairieAster-Ai/quality-steward/wiki/Metrics) · [Generated docs](https://github.com/PrairieAster-Ai/quality-steward/wiki/Generated-Documentation) · [Technical](https://github.com/PrairieAster-Ai/quality-steward/wiki/Technical) · [Language support](https://github.com/PrairieAster-Ai/quality-steward/wiki/Language-Support) · [CI portability](https://github.com/PrairieAster-Ai/quality-steward/wiki/CI-Portability) |
 | **Understand** | [How it compares](https://github.com/PrairieAster-Ai/quality-steward/wiki/Comparison) · [On a real project](https://github.com/PrairieAster-Ai/quality-steward/wiki/Example-nearestniceweather) · [Code Health Dashboard](https://github.com/PrairieAster-Ai/quality-steward/wiki/Code-Health-Dashboard) · [Blog](https://github.com/PrairieAster-Ai/quality-steward/wiki/Blog-Good-software-metrics) |
 
 ## Quickstart
