@@ -46,8 +46,10 @@ xychart-beta
 <!--/ch:trend-->
 
 The `<!--ch:trend-->` marker matches the convention the tool stamps on every dashboard it
-publishes (e.g. the [nearestniceweather Code Health Dashboard](example-nearest-nice-weather.md)),
-so this page could be re-stamped by the same substrate if quality-steward's wiki is later wired up.
+publishes (e.g. the [nearestniceweather Code Health Dashboard](example-nearest-nice-weather.md)).
+This page is also published to the project's **GitHub Wiki** (the tool's normal dashboard target),
+where the same `wiki-publish` substrate can re-stamp it — so quality-steward hosts its dashboard
+exactly the way it does for the projects it watches.
 
 ## Reproduce
 
