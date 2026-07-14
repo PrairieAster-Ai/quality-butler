@@ -3,7 +3,10 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
-## [Unreleased]
+## [0.2.4] — 2026-07-14
+
+Documentation reorganization + a consistency pass across the repo, the vendored skills, and the
+wiki. No behavioral change to the agent.
 
 ### Changed
 
@@ -12,6 +15,21 @@ Keep a Changelog; versioning is Semantic Versioning.
   the repo; the README is now a slim landing page pointing there. Functional files (the agent def,
   the six skills' `SKILL.md` + references, `.github` templates) and the community-health files
   (`CONTRIBUTING`, `SECURITY`, `CODE_OF_CONDUCT`, `CHANGELOG`) stay in the repo.
+- **Prompt-driven install/usage docs.** The README quickstart and the wiki Installation/Usage pages
+  are now copy-paste Claude Code prompts rather than hand-run shell commands.
+- **New wiki page: Generated Documentation** — what living docs, dashboards, and onboarding pages
+  (Getting-Started, Skill-Inventory) the steward generates for a watched project and how they stay
+  stamped from source.
+
+### Fixed
+
+- **Skill-doc consistency:** code-health's `package.json` alias examples now use the vendored
+  `.claude/skills/` path (were `~/.claude/` only) and list the new `agnostic-report` /
+  `portfolio-report` scripts; security-audit's README install snippets point at this repo (were the
+  old `claude-code-skills` repo) and the `owasp-security` companion is de-linked (not bundled); the
+  security-audit verifiers note now states the `references/verifiers/` prompts don't ship yet.
+- **Terminology:** standardized the finding classification on "non-trivial" (the workflow header
+  comments, the GitLab CI example, and the CHANGELOG still said "risky").
 
 ## [0.2.3] — 2026-07-13
 
