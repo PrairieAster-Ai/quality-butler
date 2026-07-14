@@ -38,13 +38,13 @@ Out of scope:
   dependency-cruiser, and the rest) — report those to their own projects; we'll adjust our usage if
   needed,
 - issues that require a consumer to have already misconfigured their own repo against the guidance
-  in [INSTALL.md](INSTALL.md) and [docs/technical.md](docs/technical.md) (for example, adding an
+  in [Installation](https://github.com/PrairieAster-Ai/quality-steward/wiki/Installation) and [Technical](https://github.com/PrairieAster-Ai/quality-steward/wiki/Technical) (for example, adding an
   `ANTHROPIC_API_KEY` secret, or switching the trigger to `pull_request_target`).
 
 ## Supply-chain posture
 
 The steward runs with write scopes and a subscription token, so the trust boundary is enforced
-deliberately. See [docs/technical.md](docs/technical.md#supply-chain--security) for the full
+deliberately. See [Technical](https://github.com/PrairieAster-Ai/quality-steward/wiki/Technical#supply-chain--security) for the full
 rationale.
 
 - **`SKILLS_REF` is pinned to a reviewed commit SHA, never a moving branch.** Consuming repos pull
@@ -77,4 +77,4 @@ defenses back this up:
   ref, not the head, so a malicious PR cannot ship a memory that suppresses its own finding.
 
 The full autonomy contract and boundary are documented in
-[docs/technical.md](docs/technical.md#the-autonomy-contract).
+[Technical](https://github.com/PrairieAster-Ai/quality-steward/wiki/Technical#the-autonomy-contract).

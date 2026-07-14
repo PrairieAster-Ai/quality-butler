@@ -3,7 +3,7 @@
 Thanks for helping improve the steward. This repo is small and opinionated; the sections below
 cover how it's laid out, how to test a change, and the conventions a pull request is expected to
 follow. For what the steward *does*, start with the [README](README.md); for how it works,
-[docs/technical.md](docs/technical.md).
+[Technical](https://github.com/PrairieAster-Ai/quality-steward/wiki/Technical).
 
 ## Repository layout
 
@@ -38,7 +38,7 @@ The skills are ordinary Claude Code skills, so you can exercise them directly wi
    under `skills/`), or symlink the one you're editing into a target project's
    `.claude/skills/<name>/`.
 2. Invoke it by its slash command in an interactive session — e.g. `/code-health`,
-   `/security-audit`, `/code-readability assess`. The [feature reference](docs/features.md) lists
+   `/security-audit`, `/code-readability assess`. The [feature reference](https://github.com/PrairieAster-Ai/quality-steward/wiki/Features) lists
    every mode and flag.
 3. For the script-backed metrics, run the producers straight from Node against any TypeScript repo:
 
@@ -56,7 +56,7 @@ cp agents/quality-steward.md .claude/agents/quality-steward.md   # in the target
 claude --agent quality-steward
 ```
 
-The `verify` path in [INSTALL.md](INSTALL.md) is the fastest end-to-end smoke test once the
+The `verify` path in [Installation](https://github.com/PrairieAster-Ai/quality-steward/wiki/Installation) is the fastest end-to-end smoke test once the
 workflow is wired up.
 
 ## The pull-at-runtime `SKILLS_REF` model
@@ -75,7 +75,7 @@ Two consequences for contributors:
 - **`SKILLS_REF` is always a full commit SHA, never a moving branch.** The steward runs with
   `contents`/`pull-requests`/`issues: write` plus a subscription token, so a moving ref would let
   any later upstream commit execute in that context. See
-  [docs/technical.md](docs/technical.md#supply-chain--security).
+  [Technical](https://github.com/PrairieAster-Ai/quality-steward/wiki/Technical#supply-chain--security).
 - **Merging your change does not ship it.** It ships when a maintainer bumps `SKILLS_REF` to a
   reviewed SHA (and cuts a release / updates the [CHANGELOG](CHANGELOG.md)). If your PR changes the
   behavior a pinned consumer would get, call that out so the bump is intentional.
@@ -108,8 +108,8 @@ the agent orchestrates. To propose one:
 2. Add it under `skills/<name>/` with its own `SKILL.md`, `scripts/`, and `references/`, following
    the shape of an existing skill.
 3. Wire it in: add it to the install loop in `agents/quality-steward.yml`, to the composed-skill
-   table in `agents/quality-steward.md`, and to [docs/features.md](docs/features.md) and
-   [docs/technical.md](docs/technical.md).
+   table in `agents/quality-steward.md`, and to [Features](https://github.com/PrairieAster-Ai/quality-steward/wiki/Features) and
+   [Technical](https://github.com/PrairieAster-Ai/quality-steward/wiki/Technical).
 4. If it publishes to the wiki, build on the shared `wiki-publish` substrate rather than
    reimplementing the clone/guard/stamp/push plumbing — pick a marker prefix and emit a facts JSON.
 
@@ -117,8 +117,8 @@ the agent orchestrates. To propose one:
 
 Documentation is treated as part of the change, not a follow-up. A PR that alters behavior,
 metrics, flags, or the workflow is expected to update the affected docs in the **same** PR —
-typically some of `docs/features.md`, `docs/technical.md`, `docs/metrics.md`,
-`docs/language-support.md`, and the [CHANGELOG](CHANGELOG.md). The PR template asks you to confirm
+typically some of the Features wiki page, the Technical wiki page, the Metrics wiki page,
+the Language-Support wiki page, and the [CHANGELOG](CHANGELOG.md). The PR template asks you to confirm
 this.
 
 Two house rules for docs:

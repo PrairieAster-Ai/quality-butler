@@ -22,7 +22,7 @@
       relative links are fine).
 - [ ] **`SKILLS_REF` note** — if this changes what a pinned consumer would run (agent prompt, a
       skill, or `agents/quality-steward.yml`), I've flagged it so the pin bump is intentional. See
-      [docs/technical.md](../docs/technical.md#supply-chain--security).
+      [Technical](https://github.com/PrairieAster-Ai/quality-steward/wiki/Technical#supply-chain--security).
 
 ## How this was tested
 

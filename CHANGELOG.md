@@ -3,6 +3,16 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [Unreleased]
+
+### Changed
+
+- **Documentation moved to the GitHub Wiki.** `INSTALL.md`, `docs/*`, and the blog were migrated
+  to the [project Wiki](https://github.com/PrairieAster-Ai/quality-steward/wiki) and removed from
+  the repo; the README is now a slim landing page pointing there. Functional files (the agent def,
+  the six skills' `SKILL.md` + references, `.github` templates) and the community-health files
+  (`CONTRIBUTING`, `SECURITY`, `CODE_OF_CONDUCT`, `CHANGELOG`) stay in the repo.
+
 ## [0.2.3] — 2026-07-13
 
 ### Fixed
