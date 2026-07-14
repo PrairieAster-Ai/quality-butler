@@ -124,6 +124,9 @@ dashboard and onboarding docs it keeps current.
   is computed.
 - **[The steward on a real project](docs/example-nearest-nice-weather.md)** — the live example,
   with real numbers.
+- **[quality-steward measures itself](docs/code-health-dashboard.md)** — the tool's own
+  self-dashboard, including a trend chart of its code across releases (and an honest note on why
+  the TS-based grade doesn't apply to this JS repo).
 - **[Technical documentation](docs/technical.md)** — architecture, the composed skills, the
   autonomy contract, policies + the quality gate, run modes, and security.
 - **[How it compares](docs/comparison.md)** — honest positioning against code-health incumbents,
