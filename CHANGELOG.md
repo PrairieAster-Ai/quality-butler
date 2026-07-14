@@ -3,6 +3,23 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.2.2] — 2026-07-13
+
+### Fixed
+
+- **Run the metric reading and self-metrics as deterministic workflow steps**, not agent
+  discretion. A live sweep on nearestniceweather revealed the agent could skip the code-health
+  roll-up and `steward-metrics.mjs`, so the `trend`/`ch:trend` sparkline and `steward-metrics.tsv`
+  weren't produced. New "Take a code-health reading" and "Record steward self-metrics" steps make
+  them always fire; the agent now reads the CI-produced reading rather than running it.
+
+## [0.2.1] — 2026-07-13
+
+### Fixed
+
+- **Quality-gate Check Run targets the PR head SHA** (`github.event.pull_request.head.sha`), not
+  the ephemeral merge commit — surfaced by the steward reviewing its own v0.2.0 adoption PR.
+
 ## [0.2.0] — 2026-07-13
 
 A capability + hardening release addressing a competitive-landscape review. Adds enforcement, a

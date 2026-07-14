@@ -165,11 +165,11 @@ set) · the auto-fix / draft-fix PR links (if any) · the count + links of sugge
 how many the suggestion policy suppressed) · docs refreshed. In CI the completion notification
 carries this; locally it's your final message.
 
-- **Self-effectiveness line.** If a `steward-metrics.mjs` helper is available (the shipped
-  workflow vendors it to `.claude/steward/steward-metrics.mjs`), run it and include its one-line
-  summary (fixes merged to date, findings open vs resolved) — the steward's own output as a
-  trend, for the ROI/governance story. It appends a dated row to `code-health/steward-metrics.tsv`,
-  which rides along on the `steward-state` branch.
+- **Self-effectiveness line.** The shipped workflow records the steward's own output
+  deterministically in a CI step (`.claude/steward/steward-metrics.mjs` → a dated row in
+  `code-health/steward-metrics.tsv`, persisted on `steward-state`). Include its one-line summary
+  (fixes merged to date, findings open vs resolved) in your report — the steward's output as a
+  trend, for the ROI/governance story. Don't re-run it yourself (it would double-count the row).
 - **Cost line.** Note the approximate model usage for the run (a full sweep costs materially more
   than a per-PR review) so the subscription cost stays visible. If exact token counts aren't
   available, state the mode and diff size as a proxy (e.g. "per-PR review, ~30-file diff").

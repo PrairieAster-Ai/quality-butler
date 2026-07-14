@@ -135,6 +135,19 @@ jobs:
           echo "range=$RANGE" >> "$GITHUB_OUTPUT"
           echo "Sweep range: $RANGE"
 
+      # Deterministic metric reading: produce the CodeHealth roll-up + trend as a
+      # WORKFLOW step (not agent discretion), so the trend + ch:trend sparkline are
+      # always regenerated and the agent can read a fresh reading. Best-effort:
+      # non-fatal if the repo has no code-health config or the analysis tools are absent.
+      - name: Take a code-health reading
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ -f code-health.config.json ] && [ -f .claude/skills/code-health/scripts/run-all.mjs ]; then
+            node .claude/skills/code-health/scripts/run-all.mjs || echo "code-health reading failed (non-fatal)"
+          else
+            echo "no code-health config or skill — skipping the reading"
+          fi
+
       - name: Build the run instruction from the trigger
         id: mode
         # github/step context is passed via env (referenced as $VARS), never
@@ -157,7 +170,7 @@ jobs:
           #   suggestion policy   → severity floor + per-run cap so findings don't flood
           #   fix policy          → `draft` opens draft PRs for validated fixes; omit to keep them as suggestions
           PROJECT_CONFIG: >-
-            Project config — metric command: `npm run codehealth:report` (read deltas vs the previous reading);
+            Project config — metric command: taken deterministically by the "Take a code-health reading" CI step below; read code-health/codehealth-stamp.json + code-health/*-history.tsv for the score and deltas vs the previous reading;
             green-gate: `npm run lint && npm run type-check`;
             auto-fixable surface: `/code-readability annotate`, lint --fix, formatter;
             doc-publish flow: your stamp/publish scripts, e.g. `/code-readability publish`/`team`;
@@ -186,6 +199,18 @@ jobs:
             --permission-mode acceptEdits
             --max-turns 80
             --allowedTools Bash,Read,Write,Edit,Grep,Glob,Skill
+
+      # Deterministic self-metrics: record the steward's own output (fixes merged,
+      # findings open vs resolved) as a WORKFLOW step AFTER the agent, so it always
+      # runs and counts what this sweep just produced. Best-effort; rides on steward-state.
+      - name: Record steward self-metrics
+        if: success() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -f .claude/steward/steward-metrics.mjs ]; then
+            node .claude/steward/steward-metrics.mjs --out code-health/steward-metrics.tsv || echo "self-metrics failed (non-fatal)"
+          fi
 
       # Persist the new marker AND the durable trend (code-health history + the
       # steward's own self-metrics) after a successful sweep, so the next run resumes
