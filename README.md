@@ -53,6 +53,14 @@ The workflow is the only file you commit; it pulls the agent + skills from this 
 [Usage](https://github.com/PrairieAster-Ai/quality-butler/wiki/Usage) wiki pages — all as
 copy-paste prompts.
 
+**Or install it as a Claude Code plugin** — to run the butler and its skills interactively (one
+command, managed updates), instead of the autonomous CI engine above:
+
+```
+/plugin marketplace add PrairieAster-Ai/quality-butler
+/plugin install quality-butler@prairieaster-quality-butler
+```
+
 ## What's in this repo
 
 ```
