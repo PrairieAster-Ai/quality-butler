@@ -98,7 +98,7 @@ jobs:
         # would let a compromised upstream execute inside it. Bump intentionally
         # after reviewing the upstream diff.
         env:
-          SKILLS_REF: 3bfc38220eab276823807606a5b01aa6d0bfddc0 # pinned to quality-butler v0.2.4; bump to take updates
+          SKILLS_REF: 444b17df099d41789965e411901744cd662e86eb # pinned to quality-butler v0.3.0; bump to take updates
         run: |
           git clone --filter=blob:none https://github.com/PrairieAster-Ai/quality-butler.git /tmp/qs
           git -C /tmp/qs checkout --quiet "$SKILLS_REF"
