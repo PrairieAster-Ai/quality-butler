@@ -55,6 +55,35 @@ function parseBadge(badge) {
   return m ? { grade: m[1], score: Number(m[2]) } : { grade: '?', score: null };
 }
 
+// A repo's dated score history for the trend view. Reads <historyDir>/codehealth-history.tsv
+// (date, score, …) — the same file a single repo's dashboard sparkline uses — and returns
+// [{ date:'YYYY-MM-DD', score:Number }] deduped to the last reading per date, oldest first.
+// Missing/short/malformed history → null (repo simply doesn't get a trend line).
+function readHistory(entry) {
+  const p = entry.historyPath
+    || (entry.path ? path.join(entry.path, historyDirFor(entry.path), 'codehealth-history.tsv') : null);
+  if (!p || !fs.existsSync(p)) return null;
+  let lines;
+  try { lines = fs.readFileSync(p, 'utf8').trim().split('\n'); } catch { return null; }
+  if (lines.length < 2) return null;
+  const header = lines[0].split('\t');
+  const di = header.indexOf('date'), si = header.indexOf('score');
+  if (di < 0 || si < 0) return null;
+  const byDate = new Map(); // last reading wins per calendar day
+  for (const ln of lines.slice(1)) {
+    const c = ln.split('\t');
+    const date = (c[di] || '').trim();
+    const score = Number(c[si]);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(score)) continue;
+    byDate.set(date, score);
+  }
+  const out = [...byDate.entries()].map(([date, score]) => ({ date, score })).sort((a, b) => (a.date < b.date ? -1 : 1));
+  return out.length ? out : null;
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const label = (iso) => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${Number(iso.slice(8, 10))}`; // 2026-06-30 → "Jun 30"
+
 const rows = [];
 for (const entry of entries) {
   const name = entry.name || (entry.path ? path.basename(path.resolve(entry.path)) : '(unnamed)');
@@ -91,12 +120,51 @@ const meanScore = scored.length ? Math.round((scored.reduce((a, r) => a + r.scor
 const byGrade = {};
 for (const r of rows) byGrade[r.grade] = (byGrade[r.grade] || 0) + 1;
 
+// ── Trend view: CodeHealth score on calendar time, one line per repo ──
+// Each repo's series starts on the day it was first scored (the first row of its history);
+// repos with no dated history fall back to a single point at today's reading. Ungraded repos
+// (the language-agnostic lens, score = null) sit the score trend out.
+const today = new Date().toISOString().slice(0, 10);
+const series = [];
+for (const entry of entries) {
+  const name = entry.name || (entry.path ? path.basename(path.resolve(entry.path)) : '(unnamed)');
+  const row = rows.find((r) => r.name === name);
+  if (!row || row.score == null) continue;
+  series.push({ name, points: readHistory(entry) || [{ date: today, score: row.score }] });
+}
+
+let trendTable = '', trendChart = '';
+if (series.length) {
+  const dates = [...new Set(series.flatMap((s) => s.points.map((p) => p.date)))].sort();
+  const ordered = series.slice().sort((a, b) => a.points.at(-1).score - b.points.at(-1).score); // worst-first, like the snapshot
+  // Score-over-time table: the real reading per date, blank where the repo has none — so each line's start shows.
+  const scoreAt = (pts, d) => { const hit = pts.find((p) => p.date === d); return hit ? hit.score : ''; };
+  const th = ['| Repo | ' + dates.map(label).join(' | ') + ' |', '|---|' + dates.map(() => '--:').join('|') + '|'];
+  for (const s of ordered) th.push('| ' + s.name + ' | ' + dates.map((d) => scoreAt(s.points, d)).join(' | ') + ' |');
+  trendTable = th.join('\n');
+  // Mermaid line chart: full-length arrays with leading-flat backfill to the first reading, so all
+  // series share one calendar axis. xychart-beta has no legend — lines are read by height.
+  const lastKnown = (pts, d) => { let v = pts[0].score; for (const p of pts) if (p.date <= d) v = p.score; return v; };
+  const lines = ordered.map((s) => `    line [${dates.map((d) => lastKnown(s.points, d)).join(', ')}]`);
+  trendChart = [
+    '```mermaid', 'xychart-beta',
+    '    title "CodeHealth score over calendar time (0-100)"',
+    `    x-axis [${dates.map((d) => `"${label(d)}"`).join(', ')}]`,
+    '    y-axis "CodeHealth score" 0 --> 100',
+    ...lines, '```',
+  ].join('\n');
+  console.log(`${trendChart}\n\n${trendTable}\n`);
+}
+
 const aggregate = {
-  generated: new Date().toISOString().slice(0, 10),
+  generated: today,
   repos: rows.length,
   mean_score: meanScore,
   by_grade: byGrade,
   table,
+  trend_chart: trendChart,
+  trend_table: trendTable,
+  trend_series: series,
   list: rows,
 };
 fs.writeFileSync(OUT_STAMP, JSON.stringify(aggregate, null, 2) + '\n');
