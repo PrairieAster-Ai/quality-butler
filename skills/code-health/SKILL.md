@@ -106,9 +106,17 @@ D 60–69 · F < 60.
 stamping + wiki clone/commit/push are the shared **`/wiki-publish`** substrate
 (`stamp-codehealth.mjs` delegates to it, prefix `ch`, with an inline fallback so
 code-health stays self-contained). Structure:
-headline grade → metrics by **business outcome** (risk / throughput / onboarding)
-→ detailed views (MI pie, hotspots, coupling) → glossary. Every view ends with
-**Improve & ROI**. Mirror the layout in `references/methodology.md`.
+**generated executive summary** (`ch:exec`) → headline grade → **generated** metrics by
+**business outcome** (risk / throughput / key-person, `ch:outcomes`) → detailed views (MI pie,
+hotspots, coupling) → **generated Improve & ROI** (`ch:roi`) → glossary. Mirror the layout in
+`references/methodology.md`.
+
+The interpretation layer (`ch:exec` / `ch:outcomes` / `ch:roi`) is **produced by
+`codehealth-report.mjs`**, not hand-authored — so every install ships plain-language verdicts
+(✅/⚠️/❌), direction-of-travel (▲/▼ vs last reading), a "so what," and a citable benchmark next to
+each number, legible to the non-technical leaders these dashboards get presented to. The audience
+personas and encoding principles behind it live in `references/methodology.md` and the
+**Audience-Personas** wiki page.
 
 Stamp facts include a **`ch:trend`** score-over-time chart (a Mermaid
 `xychart-beta` line of the last ~12 `codehealth-history.tsv` readings, with a
