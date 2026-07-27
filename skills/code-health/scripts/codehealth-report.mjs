@@ -15,7 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   DIRS, WRITE, SKILL_DIR, HISTORY_DIR,
-  norm, r1, bar, walk, lastRow, tryExec, hist, today,
+  norm, r1, bar, walk, lastRow, tryExec, hist, today, verdict,
 } from './config.mjs';
 
 const HISTORY = hist('codehealth-history.tsv');
@@ -89,12 +89,7 @@ const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score 
 const sanitize = (k) => k.toLowerCase().replace(/[^a-z]+/g, '_'); // matches the history-TSV column names
 const prevReading = lastRow(HISTORY); // previous run's row (read before this run's append) → direction-of-travel
 
-// Q1 "is it good or bad?" — the same 80/60 spirit as the A–F grade, per dimension.
-function verdict(s) {
-  if (s >= 80) return { icon: '✅', word: 'Healthy' };
-  if (s >= 60) return { icon: '⚠️', word: 'Watch' };
-  return { icon: '❌', word: 'Act now' };
-}
+// Q1 "is it good or bad?" uses the shared `verdict()` band (config.mjs).
 // Q2 "which way is it moving?" — Δ vs the previous reading's per-dimension score.
 function deltaFor(key, s) {
   if (!prevReading) return { arrow: '', text: 'new' };

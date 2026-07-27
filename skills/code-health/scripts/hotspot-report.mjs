@@ -85,10 +85,18 @@ for (const m of top) {
   console.log(`    ${String(m.score).padStart(5)}  rev=${String(m.rev).padStart(2)} cc=${String(m.cc).padStart(3)} loc=${String(m.loc).padStart(4)}  ${m.file}`);
 }
 
+// The table gets pasted into decks on its own, so it has to explain itself: a
+// plain-language caption + a "Touch cost" verdict (files that are BOTH changed
+// often and complex are true hotspots — you pay the complexity tax on every edit).
 function hotspotTable() {
-  const rows = ['| Score | Revisions | Cyclomatic | File |', '|--:|--:|--:|---|'];
-  for (const m of top.slice(0, 5)) rows.push(`| ${m.score} | ${m.rev} | ${m.cc} | [\`${m.file}\`](${BLOB}/${m.file}) |`);
-  return rows.join('\n');
+  const hotspotFiles = new Set(hotspots.map((m) => m.file));
+  const touchCost = (m) => (hotspotFiles.has(m.file) ? '🔴 High'
+    : m.rev > medRev || m.cc > medCc ? '🟡 Elevated'
+      : '🟢 Low');
+  const caption = 'Files that are **changed often _and_ complex** — you pay the complexity tax on every edit, so a bug here is both likelier and costlier. Refactor or add tests to the 🔴 High-touch-cost rows first.';
+  const rows = ['| Touch cost | Score | Revisions | Cyclomatic | File |', '|:--|--:|--:|--:|---|'];
+  for (const m of top.slice(0, 5)) rows.push(`| ${touchCost(m)} | ${m.score} | ${m.rev} | ${m.cc} | [\`${m.file}\`](${BLOB}/${m.file}) |`);
+  return `${caption}\n\n${rows.join('\n')}`;
 }
 
 if (WRITE) {
