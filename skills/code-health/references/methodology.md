@@ -66,24 +66,52 @@ mean cannot capture.
 `jscpd` token-level clones (≥ `dupMinLines`). Rising duplication is the early
 signal a shared helper is overdue. Target < 2%.
 
+## Who the dashboard serves (and the encoding it dictates)
+
+The dashboard is a **relay**: the butler produces it → a **product/project manager** (semi-technical,
+time-pressured) lifts pieces into a leadership deck → a **non-technical VP/Director** reads a metric
+for ~10 seconds inside that deck and never opens a glossary. See the **Audience-Personas** wiki page
+for the full personas. The PM needs a *defensible* narrative she can relay near-verbatim; the VP
+needs every metric to answer four reflexive questions on its face:
+
+1. **Is it good or bad?** → an explicit ✅/⚠️/❌ verdict + a word, never a bare number.
+2. **Which way is it moving?** → direction-of-travel ▲/▼/▬ vs the last reading.
+3. **Do I care — does it cost/risk money?** → a plain-language "so what" tied to risk/throughput/onboarding.
+4. **Do I need to do anything?** → a clear action + payoff in the ROI block.
+
+Encoding principles that follow: lead with the verdict (number is evidence); group by **business
+outcome**, not metric family; attach a **citable benchmark** so a challenged number holds; keep each
+block **screenshot-survivable** (self-labeled, meaningful alone in a slide). **Relative
+quantification** uses honest yardsticks only — historical trend (Δ vs last reading) + published
+thresholds (Microsoft MI ≥20, SonarSource cognitive ≤15, dup <2%). *Never* invent industry
+percentiles ("top X% of repos"): there is no such dataset, so the claim is fabricated and collapses
+under scrutiny — taking the initiative's credibility with it.
+
 ## Dashboard template (layout)
 
-1. **Headline** — `🩺 CodeHealth — <grade> · <score>/100` + the weighted bar chart.
-2. **Metrics by business outcome** — 🛡️ Lower risk from change · 🚀 Higher
-   throughput · 🧑‍💻 Lower onboarding/key-person risk. Each metric sits under the
-   outcome it drives, with ✅/⚠️/❌ and *why it's worth money*.
+0. **Executive summary** (`ch:exec`, **generated**) — a screenshot-survivable headline a VP can
+   repeat verbatim: `🩺 CodeHealth: <grade> · <score>/100 — <improving|slipping|steady>` + a plain
+   verdict sentence, the overall Δ, the one thing to watch, and the top strength. Placed **first**,
+   above the badge.
+1. **Headline** — `🩺 CodeHealth — <grade> · <score>/100` (`ch:badge`) + the weighted bar chart.
+2. **Metrics by business outcome** (`ch:outcomes`, **generated**) — 🛡️ Lower risk from change ·
+   🚀 Higher throughput · 🧑‍💻 Lower key-person risk. Each dimension is auto-placed under the outcome
+   it drives, rendered as `<verdict icon> <plain name> — <word> <Δ>. <so-what>. <raw evidence · benchmark>`.
+   This section is now **produced by `codehealth-report.mjs`**, not hand-authored.
 3. **Detailed views** — MI-band pie, hotspot table, coupling/instability bars,
    change-coupling pairs, security.
-4. **Every view ends with “Improve & ROI”** — the lowest dimensions + the action
-   + the payoff.
+4. **Improve & ROI** (`ch:roi`, **generated**) — the two lowest dimensions → the action → the payoff.
 5. **Glossary & methodology** — a condensed version of this file + reproduce commands.
 
-Markers the stamp fills: `ch:badge ch:chart ch:trend ch:pie ch:files ch:loc ch:green
-ch:yellow ch:red ch:doc_pct ch:security ch:mi_mean ch:hotspots ch:top_hotspot
+Markers the stamp fills: `ch:exec ch:outcomes ch:roi ch:badge ch:chart ch:trend ch:pie ch:files
+ch:loc ch:green ch:yellow ch:red ch:doc_pct ch:security ch:mi_mean ch:hotspots ch:top_hotspot
 ch:hotspot_table ch:fanout ch:pairs ch:cross_layer ch:cc_mean ch:cc_max ch:fn_count
-ch:fn_over15 ch:dup`. `ch:trend` is a score-over-time chart (Mermaid `xychart-beta`
-line of the last ~12 `codehealth-history.tsv` readings; Unicode-sparkline fallback,
-or an "insufficient history" note with <2 readings).
+ch:fn_over15 ch:dup`. `ch:exec` / `ch:outcomes` / `ch:roi` are the generated interpretation layer
+(above). `ch:trend` is a score-over-time chart (Mermaid `xychart-beta` line of the last ~12
+`codehealth-history.tsv` readings; Unicode-sparkline fallback, or an "insufficient history" note
+with <2 readings). The stamper is tolerant — a page missing the new regions simply keeps them
+unfilled, so already-instrumented repos just paste the three regions once and the next refresh fills
+them.
 
 ## Sources
 

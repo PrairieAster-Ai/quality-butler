@@ -78,6 +78,162 @@ const dims = [
 const score = dims.reduce((s, d) => s + d.weight * d.score, 0);
 const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
 
+// ── Interpretation layer (business meaning + relative context) ────────────────
+// Promotes the dashboard's "metrics by business outcome / why it's worth money"
+// framing out of hand-authored wiki prose and into GENERATED facts, so every
+// install ships plain-language verdicts, direction-of-travel, and citable
+// benchmarks next to each number — not bare numbers a non-technical reader can't
+// judge. Who this serves (the PM author + the non-technical VP audience) and the
+// encoding principles behind it live in references/methodology.md and the
+// Audience-Personas wiki page.
+const sanitize = (k) => k.toLowerCase().replace(/[^a-z]+/g, '_'); // matches the history-TSV column names
+const prevReading = lastRow(HISTORY); // previous run's row (read before this run's append) → direction-of-travel
+
+// Q1 "is it good or bad?" — the same 80/60 spirit as the A–F grade, per dimension.
+function verdict(s) {
+  if (s >= 80) return { icon: '✅', word: 'Healthy' };
+  if (s >= 60) return { icon: '⚠️', word: 'Watch' };
+  return { icon: '❌', word: 'Act now' };
+}
+// Q2 "which way is it moving?" — Δ vs the previous reading's per-dimension score.
+function deltaFor(key, s) {
+  if (!prevReading) return { arrow: '', text: 'new' };
+  const prev = Number(prevReading[sanitize(key)]);
+  if (!Number.isFinite(prev)) return { arrow: '', text: '' };
+  const d = r1(s - prev);
+  if (d > 0.1) return { arrow: '▲', text: `+${d}` };
+  if (d < -0.1) return { arrow: '▼', text: `${d}` };
+  return { arrow: '▬', text: '±0' };
+}
+
+// Per-dimension business framing: which outcome it drives (Q3 "do I care?"), a
+// plain-language "so what", a citable benchmark (defensibility), and the ROI
+// action + payoff (Q4 "do I act?"). outcome ∈ risk | throughput | keyperson.
+const nAdv = sevCritical + sevHigh + sevModerate + sevLow;
+const META = {
+  'Documentation': {
+    outcome: 'keyperson', plain: 'Documentation',
+    soWhat: 'New teammates find how things work without interrupting the author — smaller bus factor.',
+    benchmark: 'target: 100% TSDoc on the public API',
+    action: `document the undocumented public APIs (now ${r1(docPct)}%)`,
+    payoff: 'faster onboarding, less key-person dependency',
+  },
+  'Maintainability': {
+    outcome: 'throughput', plain: 'Ease of change',
+    soWhat: `${r1(healthPct)}% of the code is in easy-to-change shape, so routine work stays fast and cheap.`,
+    benchmark: "Microsoft Maintainability Index: ≥20 = maintainable",
+    action: `refactor the ${yellowFiles + redFiles} file(s) below the MI threshold`,
+    payoff: 'less time lost fighting brittle code',
+  },
+  'Structure': {
+    outcome: 'risk', plain: 'Clean structure',
+    soWhat: (cycles || crossLayer)
+      ? `${cycles} circular import(s) and ${crossLayer} cross-layer coupling(s) make changes ripple unpredictably.`
+      : 'Modules are cleanly separated, so a change in one place rarely breaks another.',
+    benchmark: 'healthy target: 0 circular imports (Stable-Dependencies Principle)',
+    action: cycles ? `break the ${cycles} circular import(s)` : `decouple the ${crossLayer} cross-layer pair(s)`,
+    payoff: 'changes stay local and predictable',
+  },
+  'Resilience (worst file)': {
+    outcome: 'risk', plain: 'Worst-file safety',
+    soWhat: `The single hardest-to-change file scores ${r1(minMi)} — ${minMi >= 20 ? 'still workable' : 'a landmine when it must change under deadline'}.`,
+    benchmark: "MI ≥20 is Microsoft's 'maintainable' threshold",
+    action: `split or add tests to the worst file (MI ${r1(minMi)})`,
+    payoff: 'the riskiest edit gets safer',
+  },
+  'Type & size safety': {
+    outcome: 'throughput', plain: 'Type & size safety',
+    soWhat: `${anyCount} untyped value(s) and ${over500} oversized file(s) — each is a place bugs hide and changes slow down.`,
+    benchmark: 'rule of thumb: files < 500 LOC, minimal `any`',
+    action: `type the ${anyCount} \`any\`(s) and split the ${over500} file(s) > 500 LOC`,
+    payoff: 'fewer runtime surprises, easier reviews',
+  },
+  'Security (deps)': {
+    outcome: 'risk', plain: 'Dependency security',
+    soWhat: nAdv === 0
+      ? 'No known-vulnerable dependencies shipping.'
+      : `${nAdv} dependency advisor${nAdv === 1 ? 'y' : 'ies'} (${sevCritical}C/${sevHigh}H) — known vulnerabilities in your supply chain.`,
+    benchmark: 'target: 0 critical/high advisories',
+    action: `patch the ${nAdv} dependency advisor${nAdv === 1 ? 'y' : 'ies'}`,
+    payoff: 'closes known attack surface',
+  },
+};
+
+// The three business outcomes David (the non-technical audience) actually cares
+// about — every dimension rolls up under exactly one.
+const OUTCOMES = [
+  { key: 'risk', title: '🛡️ Lower risk from change', blurb: 'How safely the code can change without breaking things.' },
+  { key: 'throughput', title: '🚀 Higher throughput', blurb: 'How fast the team can ship changes.' },
+  { key: 'keyperson', title: '🧑‍💻 Lower key-person risk', blurb: "How little the team depends on one person's memory." },
+];
+
+function dimBullet(d) {
+  const v = verdict(d.score);
+  const dl = deltaFor(d.key, d.score);
+  const m = META[d.key];
+  const trend = dl.arrow ? ` ${dl.arrow}${dl.text}` : dl.text === 'new' ? ' (new)' : '';
+  return `- ${v.icon} **${m.plain}** — ${v.word}${trend}. ${m.soWhat} <sub>${d.raw} · _${m.benchmark}_</sub>`;
+}
+
+// ch:outcomes — the generated "Metrics by business outcome" section.
+function buildOutcomes() {
+  const rows = [];
+  for (const o of OUTCOMES) {
+    const ds = dims.filter((d) => META[d.key].outcome === o.key);
+    if (!ds.length) continue;
+    rows.push(`### ${o.title}`, `_${o.blurb}_`, '');
+    for (const d of ds) rows.push(dimBullet(d));
+    rows.push('');
+  }
+  return rows.join('\n').trimEnd();
+}
+
+const VERDICT_SENTENCE = {
+  A: 'The codebase is in strong, well-governed shape.',
+  B: 'The codebase is healthy, with a few areas worth watching.',
+  C: 'The codebase is serviceable but carries real maintenance drag.',
+  D: 'The codebase is fragile — change is risky and slow.',
+  F: 'The codebase is in critical shape — a live risk to delivery.',
+};
+function trendWord(scoreDelta) {
+  if (scoreDelta === null) return 'first reading';
+  if (scoreDelta > 0.5) return 'improving';
+  if (scoreDelta < -0.5) return 'slipping';
+  return 'holding steady';
+}
+
+// ch:exec — the screenshot-survivable executive summary (a VP can repeat the
+// headline verbatim). Leads with the verdict; the number is supporting evidence.
+function buildExec() {
+  const scoreDelta = prevReading && Number.isFinite(Number(prevReading.score))
+    ? r1(score - Number(prevReading.score)) : null;
+  const deltaClause = scoreDelta === null ? 'no prior reading yet'
+    : scoreDelta === 0 ? 'unchanged since last reading'
+      : `${scoreDelta > 0 ? '+' : ''}${scoreDelta} vs last reading`;
+  const sorted = [...dims].sort((a, b) => a.score - b.score);
+  const weakest = sorted[0], strongest = sorted[sorted.length - 1];
+  const wv = verdict(weakest.score);
+  return [
+    `**🩺 CodeHealth: ${grade} · ${r1(score)}/100 — ${trendWord(scoreDelta)}.** ${VERDICT_SENTENCE[grade]}`,
+    '',
+    `- 🚦 **Overall:** grade ${grade} (${r1(score)}/100), ${deltaClause}.`,
+    `- ${wv.icon} **Watch:** ${META[weakest.key].plain} (${r1(weakest.score)}/100). ${META[weakest.key].soWhat}`,
+    `- ✅ **Strength:** ${META[strongest.key].plain} (${r1(strongest.score)}/100).`,
+  ].join('\n');
+}
+
+// ch:roi — where the next hour pays back most (the two weakest dimensions).
+function buildRoi() {
+  const lowest = [...dims].sort((a, b) => a.score - b.score).slice(0, 2);
+  const rows = ['**Where the next effort pays back most** (weakest dimensions first):', ''];
+  lowest.forEach((d, i) => {
+    const m = META[d.key]; const v = verdict(d.score);
+    rows.push(`${i + 1}. ${v.icon} **${m.plain}** (${r1(d.score)}/100) → ${m.action}. _Payoff: ${m.payoff}._`);
+  });
+  rows.push('', '<sub>Effort estimates are directional, not commitments.</sub>');
+  return rows.join('\n');
+}
+
 const DISPLAY = {
   'Documentation': 'Documentation', 'Maintainability': 'Maintainability', 'Structure': 'Structure',
   'Resilience (worst file)': 'Resilience (worst)', 'Type & size safety': 'Type & size', 'Security (deps)': 'Security (deps)',
@@ -178,6 +334,7 @@ for (const d of dims) {
   console.log(`│  ${d.key.padEnd(24)} ${String(r1(d.score)).padStart(5)}  × ${d.weight.toFixed(2)}   (${d.raw})`);
 }
 console.log(`└─ gates (pass/fail, enforced in CI): lint · types · tests`);
+console.log(`\n${buildExec()}`); // the generated executive summary (also stamped as ch:exec)
 
 if (WRITE) {
   fs.mkdirSync(HISTORY_DIR, { recursive: true });
@@ -187,6 +344,7 @@ if (WRITE) {
   fs.appendFileSync(HISTORY, `${today()}\t${r1(score)}\t${grade}\t${dims.map((d) => r1(d.score)).join('\t')}\n`);
   const stampObj = {
     badge: `${grade} · ${r1(score)} / 100`,
+    exec: buildExec(), outcomes: buildOutcomes(), roi: buildRoi(),
     chart: chartMarkdown(), pie: pieMarkdown(), trend: buildTrend(),
     files: miFiles, loc: locK, green: greenFiles, yellow: yellowFiles, red: redFiles,
     doc_pct: r1(docPct), security: r1(securityScore),
