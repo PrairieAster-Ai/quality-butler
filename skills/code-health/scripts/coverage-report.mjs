@@ -29,6 +29,18 @@ function coverageOf(ws) {
   }
 }
 
+// **An empty `coverageWorkspaces` means "this repo does not measure coverage",
+// not "measure nothing and then read it".** Without this the line below prints a
+// header, `cov[COV_WORKSPACES[0]]` is undefined, and the run dies on
+// `Cannot read properties of undefined (reading 'statements')` — which the
+// caller catches and downgrades to "its dimension will use defaults", so the
+// score silently falls back every week and the log line scrolls past.
+if (!COV_WORKSPACES.length) {
+  console.log('\nTest coverage (unit): no `coverageWorkspaces` configured — skipping.');
+  console.log('  Set it in code-health.config.json to include coverage in the roll-up.');
+  process.exit(0);
+}
+
 const cov = Object.fromEntries(COV_WORKSPACES.map((w) => [w, coverageOf(w)]));
 console.log('\nTest coverage (unit) — statements · branches:');
 for (const w of COV_WORKSPACES) console.log(`  ${w.padEnd(12)} ${r1(cov[w].statements)}% statements · ${r1(cov[w].branches)}% branches`);
