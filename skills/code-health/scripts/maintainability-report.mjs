@@ -83,19 +83,31 @@ const mis = metrics.map((m) => m.mi);
 const mean = mis.reduce((a, b) => a + b, 0) / mis.length;
 const sorted = [...mis].sort((a, b) => a - b);
 const median = sorted[Math.floor(sorted.length / 2)];
+/**
+ * The 5th-percentile MI — the tail, without the single unluckiest file.
+ *
+ * **A minimum over hundreds of files is an extreme-value statistic.** It reports
+ * whichever file happened to land lowest, so it worsens as a repo grows however
+ * healthy the repo is, and one 84-line screen can pin a whole dimension. A low
+ * percentile still measures the tail — which is the point of the Resilience
+ * dimension — without letting one file speak for it.
+ *
+ * Both travel: this scores the dimension, `min` still names the file to open.
+ */
+const p5 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.05))];
 const green = mis.filter((x) => x >= 20).length;
 const yellow = mis.filter((x) => x >= 10 && x < 20).length;
 const red = mis.filter((x) => x < 10).length;
 const worst = [...metrics].sort((a, b) => a.mi - b.mi).slice(0, 8);
 
 console.log(`\nMaintainability Index — ${files.length} files (${DIRS.join(', ')})`);
-console.log(`  mean ${r1(mean)} · median ${r1(median)} · min ${r1(sorted[0])}`);
+console.log(`  mean ${r1(mean)} · median ${r1(median)} · p5 ${r1(p5)} · min ${r1(sorted[0])}`);
 console.log(`  bands: 🟢 green (>=20) ${green} · 🟡 yellow (10-19) ${yellow} · 🔴 red (<10) ${red}`);
 console.log('  lowest MI (size/complexity hotspots):');
 for (const m of worst) console.log(`    ${r1(m.mi).toString().padStart(5)}  cc=${m.cc} sloc=${m.sloc}  ${m.file}`);
 
 if (WRITE) {
-  appendHistory(HISTORY, 'date\tfiles\tmean_mi\tmedian_mi\tmin_mi\tgreen\tyellow\tred\n',
-    `${today()}\t${files.length}\t${r1(mean)}\t${r1(median)}\t${r1(sorted[0])}\t${green}\t${yellow}\t${red}\n`);
+  appendHistory(HISTORY, 'date\tfiles\tmean_mi\tmedian_mi\tmin_mi\tgreen\tyellow\tred\tp5_mi\n',
+    `${today()}\t${files.length}\t${r1(mean)}\t${r1(median)}\t${r1(sorted[0])}\t${green}\t${yellow}\t${red}\t${r1(p5)}\n`);
   console.log(`\nappended reading → ${HISTORY}`);
 }

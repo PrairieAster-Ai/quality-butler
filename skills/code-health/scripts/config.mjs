@@ -99,6 +99,30 @@ export const tryExec = (cmd) => {
 export function appendHistory(file, header, row) {
   if (!WRITE) return;
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  if (!fs.existsSync(file)) fs.writeFileSync(file, header);
+  if (!fs.existsSync(file)) {
+    fs.writeFileSync(file, header);
+    fs.appendFileSync(file, row);
+    return;
+  }
+  // **Widen the header when a producer adds a column.** This used to write the
+  // header only on first creation, so a new column arrived in every row and was
+  // named in none of them — readers key on header position, found nothing, and
+  // fell back to a default. Silently: the value was right there at the end of
+  // the line. Observed when the MI producer began emitting a 5th percentile and
+  // the roll-up went on scoring the minimum for a full reading.
+  const lines = fs.readFileSync(file, 'utf8').split('\n');
+  const want = header.replace(/\n$/, '');
+  if (lines[0] !== want) {
+    const wantCols = want.split('\t').length;
+    if (wantCols > lines[0].split('\t').length) {
+      lines[0] = want;
+      for (let i = 1; i < lines.length; i += 1) {
+        if (!lines[i].trim()) continue;
+        const short = wantCols - lines[i].split('\t').length;
+        if (short > 0) lines[i] += '\t'.repeat(short);
+      }
+      fs.writeFileSync(file, lines.join('\n'));
+    }
+  }
   fs.appendFileSync(file, row);
 }

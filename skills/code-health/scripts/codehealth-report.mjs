@@ -56,6 +56,28 @@ const miFiles = mi ? Number(mi.files) : files.length;
 const redFiles = Math.max(0, miFiles - greenFiles - yellowFiles);
 const minMi = mi ? Number(mi.min_mi) : 20;
 /**
+ * The tail of the MI distribution, scored on a percentile rather than the floor.
+ *
+ * **A minimum over hundreds of files reports the unluckiest one, not the tail.**
+ * It gets worse as a repo grows however healthy the repo is, and refactoring
+ * cannot fix it: splitting a dense file yields two files that both land in the
+ * same band, so the count below any threshold does not fall. Measured in one
+ * repo — 38 files under MI 25 before a split, 38 after.
+ *
+ * It also mismeasures what it claims to. MI is dominated by line count, so in
+ * that same repo a 46-line file at cyclomatic 99 scored *better* than an 87-line
+ * file at cyclomatic 57. A single file drawn from the wrong end of that noise
+ * was pinning a tenth of the score.
+ *
+ * So the dimension scores the 5th percentile — still the tail, which is the
+ * whole point of Resilience, but not one file's opinion of it. `minMi` is still
+ * reported and still names the file to open, because that is the actionable
+ * number even when it is not the scored one.
+ *
+ * Falls back to `minMi` for histories written before p5 was recorded.
+ */
+const p5Mi = mi && mi.p5_mi !== undefined && mi.p5_mi !== '' ? Number(mi.p5_mi) : minMi;
+/**
  * Bumped whenever a dimension's formula changes.
  *
  * **A score is comparable to another only if the formula was the same.** When
@@ -64,7 +86,7 @@ const minMi = mi ? Number(mi.min_mi) : 20;
  * in between. Recorded here so the trend can say that, instead of drawing it as
  * a very good week.
  */
-const METHOD_VERSION = '2';
+const METHOD_VERSION = '3';
 const crossLayer = cc ? Number(cc.cross_layer) : 0;
 /** Total coupled pairs, the denominator that makes cross-layer scale-free. */
 const coupledPairs = cc ? Number(cc.coupled_pairs) : 0;
@@ -111,7 +133,7 @@ const dims = [
   { key: 'Documentation', weight: 0.20, raw: `${r1(docPct)}% TSDoc`, score: norm(docPct, 100, 50) },
   { key: 'Maintainability', weight: 0.25, raw: `${r1(healthPct)}% MI-healthy (${greenFiles}🟢/${yellowFiles}🟡)`, score: norm(healthPct, 100, 70) },
   { key: 'Structure', weight: 0.20, raw: `${cycles} cycles · ${crossLayer}/${coupledPairs || 0} cross-layer`, score: structureScore },
-  { key: 'Resilience (worst file)', weight: 0.10, raw: `min MI ${r1(minMi)}`, score: norm(minMi, 25, 5) },
+  { key: 'Resilience (worst files)', weight: 0.10, raw: `MI p5 ${r1(p5Mi)} · worst ${r1(minMi)}`, score: norm(p5Mi, 25, 5) },
   { key: 'Type & size safety', weight: 0.15, raw: `${anyCount} any · ${over500} files >500`, score: (norm(anyCount, 0, 30) + norm((over500 / files.length) * 100, 0, 10)) / 2 },
   { key: 'Security (deps)', weight: 0.10, raw: `${sevCritical}C/${sevHigh}H/${sevModerate}M advisories`, score: securityScore },
 ];
@@ -177,9 +199,10 @@ const META = {
     action: cycles ? `break the ${cycles} circular import(s)` : `decouple the ${crossLayer} cross-layer pair(s)`,
     payoff: 'changes stay local and predictable',
   },
-  'Resilience (worst file)': {
+  'Resilience (worst files)': {
     outcome: 'risk', plain: 'Worst-file safety',
-    soWhat: `The single hardest-to-change file scores ${r1(minMi)} — ${minMi >= 20 ? 'still workable' : 'a landmine when it must change under deadline'}.`,
+    soWhat: `The hardest-to-change 5% of files sit at MI ${r1(p5Mi)} or below, and the very worst `
+      + `scores ${r1(minMi)} — ${minMi >= 20 ? 'still workable' : 'a landmine when it must change under deadline'}.`,
     benchmark: "MI ≥20 is Microsoft's 'maintainable' threshold",
     action: `split or add tests to the worst file (MI ${r1(minMi)})`,
     payoff: 'the riskiest edit gets safer',
@@ -279,12 +302,12 @@ function buildRoi() {
 
 const DISPLAY = {
   'Documentation': 'Documentation', 'Maintainability': 'Maintainability', 'Structure': 'Structure',
-  'Resilience (worst file)': 'Resilience (worst)', 'Type & size safety': 'Type & size', 'Security (deps)': 'Security (deps)',
+  'Resilience (worst files)': 'Resilience (worst)', 'Type & size safety': 'Type & size', 'Security (deps)': 'Security (deps)',
 };
 function chartNote(key) {
   switch (key) {
     case 'Maintainability': return yellowFiles === 0 ? `all ${miFiles} files MI-green` : `${greenFiles}🟢 / ${yellowFiles}🟡`;
-    case 'Resilience (worst file)': return `worst file MI ${r1(minMi)}`;
+    case 'Resilience (worst files)': return `MI p5 ${r1(p5Mi)}, worst file ${r1(minMi)}`;
     case 'Structure': return crossLayer ? `${crossLayer} cross-layer pair${crossLayer === 1 ? '' : 's'}` : '';
     case 'Security (deps)': {
       const adv = [];

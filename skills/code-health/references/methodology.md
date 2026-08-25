@@ -16,7 +16,7 @@ TSV rows).
 | Documentation | 20% | doc coverage % (100% → 100, 50% → 0) |
 | Maintainability | 25% | MI health proportion = (green + ½·yellow) / files (100% → 100, 70% → 0) |
 | Structure | 20% | `100 − 25·cycles − %·of coupled pairs that cross a layer` (absolute `5·pairs` below 10 coupled pairs, where the share is too noisy) |
-| Resilience (worst file) | 10% | lowest single-file MI (25 → 100, 5 → 0) |
+| Resilience (worst files) | 10% | **5th-percentile** file MI (25 → 100, 5 → 0); the minimum is still reported, and still names the file to open |
 | Type & size safety | 15% | `any` count (0→100, 30→0) + files>500 LOC, averaged |
 | Security (deps) | 10% | `100 − 25·critical − 10·high − 1·moderate − 0.25·low` |
 
@@ -27,8 +27,18 @@ length — it hides the few files that cause real pain
 [arXiv:2307.12082](https://arxiv.org/abs/2307.12082)). CodeScene aggregates the
 same way: a weighted **proportion of healthy code** + a separate **lowest-module**
 KPI. So Maintainability = "what share of code is in good shape" and Resilience =
-"how bad is the worst file" — body and tail of the distribution, which a single
-mean cannot capture.
+"how bad is the tail" — body and tail of the distribution, which a single mean
+cannot capture.
+
+**Why the 5th percentile and not the minimum.** A minimum over hundreds of files
+is an extreme-value statistic: it reports whichever file happened to land lowest,
+so it degrades as a repo grows however healthy the repo is. Worse, refactoring
+cannot move it — splitting a dense file yields two files that both land in the
+same band. Measured in one repo: 38 files under MI 25 before a split, 38 after.
+And because MI is dominated by line count, the file it picks is often not the
+complex one — in that same repo a 46-line file at cyclomatic 99 scored *better*
+than an 87-line file at cyclomatic 57. The percentile still measures the tail,
+which is the point of the dimension, without letting one file speak for it.
 
 ## Complexity & maintainability
 
