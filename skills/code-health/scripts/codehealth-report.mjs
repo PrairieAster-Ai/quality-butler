@@ -295,10 +295,11 @@ function buildTrend(n = 12) {
       // Collapse same-day readings to the last one taken. Two runs on one day is
       // ordinary — a scheduled sweep plus a manual check — and plotting both draws
       // a flat segment that reads as "a week where nothing improved".
+      const ci = header.indexOf('scope');
       const byDate = new Map();
       for (const v of lines.slice(1).map((l) => l.split('\t'))) {
         const date = v[di]; const score = Number(v[si]);
-        if (date && Number.isFinite(score)) byDate.set(date, { date, score });
+        if (date && Number.isFinite(score)) byDate.set(date, { date, score, scope: ci >= 0 ? v[ci] : '' });
       }
       series = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-n);
     }
@@ -337,6 +338,7 @@ function buildTrend(n = 12) {
       '',
       `_${series.length} readings, one point per day. Change over the period shown: `
         + `**${sign}${delta}**. Grade bands: A 90+ · B 80-89 · C 70-79 · D 60-69 · F under 60._`,
+      ...scopeNote(series),
     ].join('\n');
   } catch {
     // Fallback: Unicode sparkline scaled across the observed score range.
@@ -344,6 +346,37 @@ function buildTrend(n = 12) {
     const spark = scores.map((s) => SPARK[Math.min(SPARK.length - 1, Math.floor(((s - min) / span) * (SPARK.length - 1)))]).join('');
     return `${spark}  ${r1(first)}→${r1(last)} (Δ ${sign}${delta})`;
   }
+}
+
+/**
+ * Say so when the thing being measured changed inside the plotted window.
+ *
+ * **A score is only comparable to another taken over the same scope.** Adding a
+ * directory to `dirs` can move the number several points with no code change,
+ * and a line that steps down for that reason reads exactly like a regression.
+ * Silence here is how a measurement correction gets mistaken for a bad week.
+ */
+function scopeNote(series) {
+  const known = series.filter((p) => p.scope);
+  if (known.length < 2) return [];
+  const changes = [];
+  for (let i = 1; i < known.length; i += 1) {
+    if (known[i].scope !== known[i - 1].scope) {
+      const before = new Set(known[i - 1].scope.split(','));
+      const after = known[i].scope.split(',');
+      const added = after.filter((d) => !before.has(d));
+      const removed = [...before].filter((d) => !after.includes(d));
+      const what = [
+        added.length ? `added ${added.join(', ')}` : '',
+        removed.length ? `dropped ${removed.join(', ')}` : '',
+      ].filter(Boolean).join(' and ');
+      changes.push(`${known[i].date} (${what || 'scope changed'})`);
+    }
+  }
+  if (!changes.length) return [];
+  return ['', `> **What is measured changed during this period:** ${changes.join('; ')}. `
+    + 'Readings either side are not directly comparable, and a step at that point '
+    + 'is the measurement moving rather than the code.'];
 }
 
 function pieMarkdown() {
@@ -368,10 +401,16 @@ console.log(`\n${buildExec()}`); // the generated executive summary (also stampe
 
 if (WRITE) {
   fs.mkdirSync(HISTORY_DIR, { recursive: true });
+  // **Record what was measured, not just the number.** Widening `dirs` by one
+  // directory moved this repo's score 73.7 → 68.5 in an afternoon with no code
+  // change — a config correction that made the trend read as "they broke
+  // something today". A score is only comparable to another score taken over the
+  // same scope, so the scope travels with it and the chart can say when it moved.
+  const scope = (DIRS || []).join(',');
   if (!fs.existsSync(HISTORY)) {
-    fs.writeFileSync(HISTORY, `date\tscore\tgrade\t${dims.map((d) => d.key.toLowerCase().replace(/[^a-z]+/g, '_')).join('\t')}\n`);
+    fs.writeFileSync(HISTORY, `date\tscore\tgrade\t${dims.map((d) => d.key.toLowerCase().replace(/[^a-z]+/g, '_')).join('\t')}\tscope\n`);
   }
-  fs.appendFileSync(HISTORY, `${today()}\t${r1(score)}\t${grade}\t${dims.map((d) => r1(d.score)).join('\t')}\n`);
+  fs.appendFileSync(HISTORY, `${today()}\t${r1(score)}\t${grade}\t${dims.map((d) => r1(d.score)).join('\t')}\t${scope}\n`);
   const stampObj = {
     badge: `${grade} · ${r1(score)} / 100`,
     exec: buildExec(), outcomes: buildOutcomes(), roi: buildRoi(),
