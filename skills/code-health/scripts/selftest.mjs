@@ -165,6 +165,33 @@ check('a gate a workflow does run is not reported', () => {
     'matching only the first token called `echo nope` invoked; this is that regression');
 });
 
+// ── duplicate declarations: same name, two shapes ────────────────────────────
+function declFixture({ duplicate }) {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'ch-decl-'));
+  fs.mkdirSync(path.join(d, 'src/a'), { recursive: true });
+  fs.mkdirSync(path.join(d, 'src/b'), { recursive: true });
+  fs.writeFileSync(path.join(d, 'src/a/t.ts'), 'export interface Row {\n  id: string;\n  name: string;\n}\n');
+  fs.writeFileSync(path.join(d, 'src/b/t.ts'), duplicate
+    ? 'export interface Row {\n  id: string;\n}\n'          // same name, fewer fields: drifted
+    : 'export interface Other {\n  id: string;\n}\n');
+  fs.writeFileSync(path.join(d, 'code-health.config.json'), JSON.stringify({ dirs: ['src'], historyDir: 'code-health' }));
+  return d;
+}
+const dupes = (cwd) => {
+  try { return execFileSync('node', [path.join(DIR, 'duplicate-declarations.mjs'), '--no-write'], { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }); }
+  catch (e) { return (e.stdout || '') + (e.stderr || ''); }
+};
+
+check('the same name declared twice with different shapes is reported as drifted', () => {
+  const out = dupes(declFixture({ duplicate: true }));
+  assert(/DRIFTED\s+Row/.test(out), 'expected Row flagged as drifted, got:\n' + out.slice(0, 400));
+});
+
+check('distinct names are not reported', () => {
+  const out = dupes(declFixture({ duplicate: false }));
+  assert(out.includes('declared exactly once'), 'a clean tree must report clean, got:\n' + out.slice(0, 400));
+});
+
 let failed = 0;
 for (const [ok, name] of results) { console.log(`  ${ok ? '✓' : '✗'} ${name}`); if (!ok) failed += 1; }
 console.log(`\n${results.length - failed}/${results.length} negative controls passing`);

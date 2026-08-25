@@ -123,6 +123,27 @@ nobody had done.
   line between it and a complete one as though they were comparable.
   `--allow-partial` records it anyway, for a repo not yet instrumented.
 
+## Duplicate declarations
+
+`node <skill>/scripts/duplicate-declarations.mjs` finds the same exported name
+declared in two places — and reports whether the two shapes still agree.
+
+This is **not** what a copy-paste detector finds. jscpd finds duplicated blocks;
+this finds duplicated *contracts*: one `PlannedRow` in the API and another in the
+web app, identical the day they were written and drifting apart afterwards.
+
+It is the characteristic failure of AI-assisted work, because an assistant works
+in the context it was given. Asked to add a field to a screen, it declares the
+type where it is looking, since the other declaration is in a file it never
+opened. The result compiles, passes review, and is wrong later rather than now.
+
+- **same name, same shape** — a warning: it will drift.
+- **same name, different shape** — a bug that has already happened. One side is
+  missing something the other sends.
+
+Validated against a repo where six such drifts had been found by hand: run at
+the commit before they were fixed, it independently flagged all six.
+
 ## Gate liveness
 
 `node <skill>/scripts/gate-liveness.mjs [--limit 100]` asks the question the

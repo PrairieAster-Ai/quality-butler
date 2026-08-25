@@ -40,7 +40,7 @@ console.log(`code-health — running ${DIR}\n`);
 const producers = [
   'maintainability-report', 'complexity-report', 'hotspot-report',
   'coupling-report', 'change-coupling-report', 'duplication-report',
-  'security-report', 'coverage-report',
+  'security-report', 'coverage-report', 'duplicate-declarations',
   // Last because it is the slow one: roughly one API call per CI run examined.
   // Degrades to a one-line notice when `gh` is absent or unauthenticated.
   'gate-liveness',

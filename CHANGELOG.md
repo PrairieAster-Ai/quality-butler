@@ -3,6 +3,26 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.9.0] — 2026-08-25
+
+### Added
+
+- `skills/code-health/scripts/duplicate-declarations.mjs` — the same exported
+  name declared twice, and whether the two shapes still agree. Not what a
+  copy-paste detector finds: jscpd finds duplicated blocks, this finds duplicated
+  *contracts*, which agree the day they are written and drift afterwards. Same
+  name and same shape is a warning; same name and different shape is a bug that
+  has already happened.
+
+  The characteristic failure of AI-assisted work, because an assistant declares
+  the type where it is looking rather than where the name already lives.
+
+  Validated by running it at the commit before six such drifts were fixed by
+  hand: it independently flagged all six, and counted seventeen cross-layer
+  duplicates against seventeen declarations that were lifted into a shared
+  package.
+- Two more negative controls (13 total).
+
 ## [0.8.0] — 2026-08-25
 
 **Which of your checks has ever been observed to fail?** Nine checks across one
