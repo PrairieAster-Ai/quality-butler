@@ -45,6 +45,39 @@ for (const files of commits) {
   }
 }
 
+/**
+ * Roots holding shared libraries rather than applications.
+ *
+ * Configurable because the convention is not universal; `packages/` is the npm
+ * workspace default.
+ */
+const SHARED_ROOTS = cfg.sharedRoots ?? ['packages'];
+
+/** The application a file belongs to — `apps/api`, `packages/database`. */
+const appOf = (p) => p.split('/').slice(0, 2).join('/');
+
+/** Is this file part of a shared library rather than an application? */
+const isShared = (p) => SHARED_ROOTS.includes(p.split('/')[0]);
+
+/**
+ * Do these two files belong to different applications?
+ *
+ * **Two applications changing together is the smell. An application changing
+ * with a library it depends on is not.** Adding a column means changing the
+ * schema and the route that reads it — that is the Stable-Dependencies
+ * Principle working, and there is no refactor that stops it. A measure that
+ * flags an unavoidable, correct relationship is reporting noise as debt.
+ *
+ * It was doing exactly that: in one repo five of sixteen "cross-layer" pairs
+ * were routes co-changing with the Drizzle schema, which is what routes and
+ * schemas do. The remaining eleven were a real finding — a web app and an API
+ * sharing a contract that had no home, and which had silently drifted twice.
+ */
+function isCrossLayer(a, b) {
+  if (isShared(a) || isShared(b)) return false;
+  return appOf(a) !== appOf(b);
+}
+
 const coupled = [];
 for (const [k, co] of pairCo) {
   if (co < MIN_CO) continue;
@@ -54,7 +87,7 @@ for (const [k, co] of pairCo) {
   if (ra < MIN_REV || rb < MIN_REV) continue;
   const degree = co / Math.min(ra, rb);
   if (degree < MIN_DEGREE) continue;
-  const crossLayer = a.split('/')[1] !== b.split('/')[1] || a.split('/').slice(0, 3).join('/') !== b.split('/').slice(0, 3).join('/');
+  const crossLayer = isCrossLayer(a, b);
   coupled.push({ a, b, co, degree, crossLayer });
 }
 coupled.sort((x, y) => y.degree - x.degree || y.co - x.co);
@@ -63,7 +96,9 @@ const pct = (d) => `${Math.round(d * 100)}%`;
 console.log(`\nChange coupling — files that change together over the last 365 days (${used} commits ≤ ${MAX_FILES} files)`);
 console.log(`  ${coupled.length} coupled pair(s) (≥ ${MIN_CO} co-changes, each file ≥ ${MIN_REV} revs, ≥ ${pct(MIN_DEGREE)} degree)`);
 console.log('  strongest coupling (consider why these always move together):');
-for (const c of coupled.slice(0, 12)) {
+// Twelve is enough to read; the whole list is what you need when deciding
+// whether a cross-layer count is a real finding or a heuristic misfiring.
+for (const c of coupled.slice(0, Number(process.env.CC_TOP ?? 12))) {
   console.log(`    ${pct(c.degree).padStart(4)}  ${String(c.co).padStart(2)}×  ${c.crossLayer ? '⚠ cross ' : '        '}${c.a}  ⇄  ${c.b}`);
 }
 

@@ -66,8 +66,14 @@ which is the point of the dimension, without letting one file speak for it.
   and break tree-shaking.
 - **Change coupling** — files repeatedly edited in the same commit (behavioral
   dependency the import graph may miss). Degree = co-changes / min(revisions).
-  **Cross-layer** coupling (e.g. web ↔ api) is the smell; within-feature is usually
-  fine.
+  **Cross-layer** means two different *applications* (e.g. web ↔ api) — that is the
+  smell; within-feature is usually fine.
+  **An application co-changing with a shared library it depends on is not
+  cross-layer.** Adding a column means changing the schema and the route that
+  reads it; that is the Stable-Dependencies Principle working and no refactor
+  stops it. Flagging it reports noise as debt — in one repo five of sixteen
+  "cross-layer" pairs were routes moving with the Drizzle schema. Shared roots
+  default to `packages/`; override with `sharedRoots`.
 - **Hotspots** — churn × complexity: `revisions(window) × cyclomatic`. The count
   is the top-right quadrant (both above median) — refactor / add tests here first.
 

@@ -86,7 +86,7 @@ const p5Mi = mi && mi.p5_mi !== undefined && mi.p5_mi !== '' ? Number(mi.p5_mi) 
  * in between. Recorded here so the trend can say that, instead of drawing it as
  * a very good week.
  */
-const METHOD_VERSION = '3';
+const METHOD_VERSION = '4';
 const crossLayer = cc ? Number(cc.cross_layer) : 0;
 /** Total coupled pairs, the denominator that makes cross-layer scale-free. */
 const coupledPairs = cc ? Number(cc.coupled_pairs) : 0;
