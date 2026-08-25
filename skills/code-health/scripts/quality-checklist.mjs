@@ -35,7 +35,15 @@ const pkg = (() => { try { return JSON.parse(read('package.json')); } catch { re
 const scripts = pkg.scripts || {};
 const eslintTxt = find(['eslint.config.js', 'eslint.config.mjs', '.eslintrc.js', '.eslintrc.json', '.eslintrc.cjs']).map(read).join('\n');
 const vitestTxt = find(['vitest.config.ts', 'vitest.config.js', 'vite.config.ts']).map(read).join('\n');
-const preCommit = read('.pre-commit-config.yaml') + (exists('.husky') ? fs.readdirSync('.husky').map((f) => read(path.join('.husky', f))).join('\n') : '');
+// **Every local hook, not just pre-commit.** A repo that sets `core.hooksPath`
+// to a tracked directory keeps its hooks nowhere this used to look, and one
+// checked here reported "no secret scanning" while gitleaks blocked every push.
+// Reporting a control as absent when it is enforced is worse than not checking:
+// it sends somebody to install a second scanner.
+const hookDirs = ['.husky', '.githooks', '.git/hooks'];
+const hooks = hookDirs.filter(exists).flatMap((d) => fs.readdirSync(d)
+  .map((f) => read(path.join(d, f)))).join('\n');
+const preCommit = read('.pre-commit-config.yaml') + hooks;
 
 const npmScript = (re) => Object.keys(scripts).some((k) => re.test(k));
 const ciHas = (re) => re.test(ci);
@@ -55,9 +63,14 @@ const CAPS = [
   ['🛡️ Build & test gates (CI)', 'Build validation', ciHas(/build/i) ? DONE : GAP, 'vite build'],
   ['🛡️ Build & test gates (CI)', 'Coverage threshold gate', /thresholds\s*:\s*\{[^}]*\d/.test(vitestTxt) ? DONE : GAP, 'fail CI below a coverage floor'],
 
-  ['🔒 Security', 'Secret scanning', (ciHas(/trufflehog|gitleaks/i) || /gitleaks|detect-secret/i.test(preCommit)) ? DONE : GAP, 'TruffleHog (CI) / gitleaks (pre-commit)'],
+  ['🔒 Security', 'Secret scanning', (ciHas(/trufflehog|gitleaks/i) || /gitleaks|detect-secret/i.test(preCommit)) ? DONE : GAP, 'TruffleHog / gitleaks, in CI or a git hook'],
   ['🔒 Security', 'Dependency audit (SCA)', ciHas(/npm audit|security audit/i) ? DONE : GAP, '`npm audit` in CI + code-health trend'],
-  ['🔒 Security', 'SAST (CodeQL)', ciHas(/codeql/i) ? DONE : GAP, 'GitHub CodeQL'],
+  // Named by capability, not by vendor. Reporting a flat GAP for "no CodeQL" in a
+  // repo that runs semgrep on every push overstates the risk and points the fix at
+  // the wrong thing — the row below already credits the same scanner.
+  ['🔒 Security', 'SAST (static analysis)',
+    (ciHas(/codeql|semgrep|sonarqube|snyk code/i) || /semgrep|codeql/i.test(preCommit)) ? DONE : GAP,
+    'CodeQL, semgrep or equivalent — in CI or a git hook'],
   ['🔒 Security', '/security-audit per-PR (semgrep + osv)', ciHas(/security-audit/i) && /run/.test(ci) ? DONE : GAP, 'differential SAST/SCA + LLM verify on the diff'],
 
   ['📊 Code-health metrics', 'Maintainability Index', npmScript(/^mi:report/) ? DONE : GAP, ''],
