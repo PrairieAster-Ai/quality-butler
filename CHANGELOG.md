@@ -3,6 +3,26 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.8.0] — 2026-08-25
+
+**Which of your checks has ever been observed to fail?** Nine checks across one
+repo family turned out to report success while measuring nothing, each found by
+accident and weeks apart. They had one thing in common: nobody could have told
+you, at any point, whether they still worked.
+
+### Added
+
+- `skills/code-health/scripts/gate-liveness.mjs` — finds gates that have gone
+  quiet. Reports gate-shaped npm scripts no workflow invokes (dead, or
+  deliberately manual), and CI steps that have run many times and never once
+  failed. The second is a question rather than a verdict: an unproven gate is
+  not a broken one, it is one you have no evidence about. Wired into
+  `run-all.mjs`, last, since it costs about an API call per run examined.
+- Two more negative controls, bringing `selftest.mjs` to 11. Both were earned:
+  matching a script's command on its first token called `echo nope` invoked,
+  because workflow files contain the word `echo` — found by planting a dead gate
+  and watching the detector fail to notice it.
+
 ## [0.7.0] — 2026-08-25
 
 **Absence of evidence was scored as evidence of health.** Every dimension fell

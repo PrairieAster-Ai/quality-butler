@@ -41,6 +41,9 @@ const producers = [
   'maintainability-report', 'complexity-report', 'hotspot-report',
   'coupling-report', 'change-coupling-report', 'duplication-report',
   'security-report', 'coverage-report',
+  // Last because it is the slow one: roughly one API call per CI run examined.
+  // Degrades to a one-line notice when `gh` is absent or unauthenticated.
+  'gate-liveness',
 ];
 for (const p of producers) {
   try {

@@ -136,6 +136,35 @@ check('--any-copy overrides the pin check', () => {
   assert(!out.includes('pins its own copy'), 'override should proceed');
 });
 
+// ── gate liveness: does the dead-gate detector discriminate? ─────────────────
+/** A repo with one gate script, optionally referenced by a workflow. */
+function gateFixture({ referenced }) {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'ch-gate-'));
+  fs.writeFileSync(path.join(d, 'package.json'), JSON.stringify({
+    name: 'f', scripts: { 'bogus:check': 'node scripts/probe-zzz.mjs' },
+  }));
+  fs.mkdirSync(path.join(d, '.github/workflows'), { recursive: true });
+  fs.writeFileSync(path.join(d, '.github/workflows/ci.yml'),
+    referenced ? 'jobs:\n  a:\n    steps:\n      - run: node scripts/probe-zzz.mjs\n'
+               : 'jobs:\n  a:\n    steps:\n      - run: echo hello\n');
+  fs.writeFileSync(path.join(d, 'code-health.config.json'), JSON.stringify({ dirs: ['src'], historyDir: 'code-health' }));
+  return d;
+}
+const liveness = (cwd) => {
+  try { return execFileSync('node', [path.join(DIR, 'gate-liveness.mjs'), '--limit', '1', '--no-write'], { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }); }
+  catch (e) { return (e.stdout || '') + (e.stderr || ''); }
+};
+
+check('a gate no workflow runs is reported', () => {
+  assert(liveness(gateFixture({ referenced: false })).includes('bogus:check'),
+    'a script nothing invokes should be listed');
+});
+
+check('a gate a workflow does run is not reported', () => {
+  assert(!liveness(gateFixture({ referenced: true })).includes('bogus:check'),
+    'matching only the first token called `echo nope` invoked; this is that regression');
+});
+
 let failed = 0;
 for (const [ok, name] of results) { console.log(`  ${ok ? '✓' : '✗'} ${name}`); if (!ok) failed += 1; }
 console.log(`\n${results.length - failed}/${results.length} negative controls passing`);

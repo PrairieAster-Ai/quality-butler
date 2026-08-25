@@ -123,6 +123,30 @@ nobody had done.
   line between it and a complete one as though they were comparable.
   `--allow-partial` records it anyway, for a repo not yet instrumented.
 
+## Gate liveness
+
+`node <skill>/scripts/gate-liveness.mjs [--limit 100]` asks the question the
+other metrics cannot: **which of your checks has ever been observed to fail?**
+
+Noise gets noticed; silence does not. A gate that cries wolf gets fixed the same
+week. A gate that quietly stopped discriminating stays green forever, and looks
+exactly like a healthy repo. This looks for the silence, in the two places it
+hides:
+
+- **Declared but never run** — a gate-shaped npm script no workflow invokes. It
+  exists, it is documented, and it is dead.
+- **Run but never failed** — a step that has executed many times and never once
+  gone red.
+
+The second is deliberately **not** a pass/fail signal, and the report says so.
+Plenty of gates never fail because the code is good; a green lint over a clean
+repo is the point. The output is a question: here are the checks you have no
+evidence about. Answer it by writing each one a negative control — plant the
+failure it claims to catch and watch it go red, the way `selftest.mjs` does.
+
+Run by `run-all.mjs` last, because it costs roughly one API call per CI run
+examined. Without `gh` authenticated it prints a notice and scores nothing.
+
 ## Negative controls
 
 `node <skill>/scripts/selftest.mjs` plants known-bad input and asserts each gate
