@@ -144,6 +144,38 @@ opened. The result compiles, passes review, and is wrong later rather than now.
 Validated against a repo where six such drifts had been found by hand: run at
 the commit before they were fixed, it independently flagged all six.
 
+## Metrics for assisted development
+
+Three measures aimed at how the work actually fails when a model writes most of it.
+
+**`mutation-score.mjs`** — do the tests test anything? Coverage says a line ran;
+it does not say anyone checked the result. Under assistance that is the default
+failure rather than a rare one, because test volume is nearly free and a test
+that asserts "it did not throw" looks like a test that verifies the answer. This
+changes the source under the tests and asks whether they notice. Only files with
+a colocated test are mutated: a file with no test is a coverage question, and
+mixing the two drowns the signal that matters — *you have a test for this and it
+does not catch a changed comparison*.
+
+Deliberately **not** in `run-all`: it runs the whole suite once per mutant.
+Give it a nightly. On the repo this was built for, a sample of 8 found that every
+test on the invite sender asserted a failure path and none asserted success, so
+`return true` could have become `return false` untouched.
+
+**`delivery-metrics.mjs`** — DORA, re-pointed. Deploy frequency and lead time
+measure how fast work leaves the keyboard, which is exactly the part that got
+cheap; they inflate under assistance and stop discriminating. What still means
+something:
+
+- *verification ratio* — non-test lines changed per test line. A large diff that
+  moved no test is either safe by construction or unverified, and the number
+  makes you say which.
+- *change-failure rate* — share of commits that fix or revert. A proxy for the
+  DORA definition, which needs incident data this cannot see.
+- *time to detect* — how old the lines a fix rewrote actually were. Blame the
+  lines, not the files: blaming files reported 0.2 days on a repo whose real
+  median was 6.1, because it was measuring how recently anyone had touched them.
+
 ## Gate liveness
 
 `node <skill>/scripts/gate-liveness.mjs [--limit 100]` asks the question the

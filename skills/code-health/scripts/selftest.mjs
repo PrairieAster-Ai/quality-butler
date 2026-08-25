@@ -192,6 +192,32 @@ check('distinct names are not reported', () => {
   assert(out.includes('declared exactly once'), 'a clean tree must report clean, got:\n' + out.slice(0, 400));
 });
 
+// ── the new metrics refuse to report a number they cannot stand behind ───────
+check('mutation scoring refuses to run against a red suite', () => {
+  const d = fixture();
+  // A mutable file WITH a colocated test, so the run reaches the baseline check
+  // rather than stopping at "nothing to mutate".
+  fs.writeFileSync(path.join(d, 'src/b.ts'), 'export const ok = (n: number) => n >= 2 && true;\n');
+  fs.writeFileSync(path.join(d, 'src/b.test.ts'), 'export {};\n');
+  let out = '';
+  try { out = execFileSync('node', [path.join(DIR, 'mutation-score.mjs'), '--test', 'false', '--no-write'], { cwd: d, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }); }
+  catch (e) { out = (e.stdout || '') + (e.stderr || ''); }
+  // Every mutant "passes" against a suite that was already failing, which would
+  // score 100%. Refusing is the only honest answer.
+  assert(/red before any mutation|nothing to measure/.test(out),
+    'expected a refusal or a nothing-to-measure notice, got:\n' + out.slice(0, 300));
+});
+
+check('delivery metrics refuse a window git silently ignored', () => {
+  const d = fixture();
+  let out = '';
+  // git answers `--since` with a date it cannot parse by returning everything,
+  // so an unusable window reads as a full-history report wearing the window's label.
+  try { out = execFileSync('node', [path.join(DIR, 'delivery-metrics.mjs'), '--window', 'not-a-date', '--no-write'], { cwd: d, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }); }
+  catch (e) { out = (e.stdout || '') + (e.stderr || ''); }
+  assert(/not a window git will honour|no commits/.test(out), 'expected a refusal, got:\n' + out.slice(0, 300));
+});
+
 let failed = 0;
 for (const [ok, name] of results) { console.log(`  ${ok ? '✓' : '✗'} ${name}`); if (!ok) failed += 1; }
 console.log(`\n${results.length - failed}/${results.length} negative controls passing`);

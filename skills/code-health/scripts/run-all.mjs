@@ -40,10 +40,12 @@ console.log(`code-health — running ${DIR}\n`);
 const producers = [
   'maintainability-report', 'complexity-report', 'hotspot-report',
   'coupling-report', 'change-coupling-report', 'duplication-report',
-  'security-report', 'coverage-report', 'duplicate-declarations',
+  'security-report', 'coverage-report', 'duplicate-declarations', 'delivery-metrics',
   // Last because it is the slow one: roughly one API call per CI run examined.
   // Degrades to a one-line notice when `gh` is absent or unauthenticated.
   'gate-liveness',
+  // `mutation-score` is deliberately absent: it runs the whole test suite once
+  // per mutant, so it belongs in a nightly job, not in every reading.
 ];
 for (const p of producers) {
   try {

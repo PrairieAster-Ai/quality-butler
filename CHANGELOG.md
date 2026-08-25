@@ -3,6 +3,40 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.10.0] — 2026-08-25
+
+### Added
+
+- **`mutation-score.mjs`** — changes the source under the tests and asks whether
+  they notice. Coverage says a line ran, not that anyone checked the result.
+  Only files with a colocated test are mutated, so a survivor means "you have a
+  test for this and it does not catch a changed comparison" rather than "this is
+  untested". Refuses to run against an already-red suite, where every mutant
+  would count as killed and the score would read 100%. Not in `run-all`: it runs
+  the suite once per mutant and belongs in a nightly.
+- **`delivery-metrics.mjs`** — verification ratio, change-failure rate, and time
+  to detect. Deploy frequency and lead time are deliberately absent: they measure
+  how fast work leaves the keyboard, which is the part assistance made cheap.
+
+### Fixed
+
+- **`duplicate-declarations` called documented-vs-undocumented twins "drift".**
+  Comments were stripped after whitespace was collapsed, leaving a double space
+  where each comment had been, so no documented declaration ever matched its
+  undocumented copy. Two of the reported pairs on the originating repo were this
+  and nothing else.
+- Its advice covered one of the three cases it finds. One concept copied wants a
+  shared home; one entity with many views wants each view derived from a
+  canonical type; two different concepts sharing a name want renaming and have
+  nothing to unify. Widening a view type until it covers every screen makes each
+  screen depend on fields it never reads.
+- `delivery-metrics` blamed files rather than the changed lines, reporting a
+  median age of 0.2 days on a repo whose real median was 6.1 — it was measuring
+  how recently anyone had touched the file.
+- It also accepted a window git could not parse. `--since` with an unusable value
+  returns the entire history, so a typo reported every commit ever made under a
+  label claiming three months. The window is validated before git sees it.
+
 ## [0.9.0] — 2026-08-25
 
 ### Added

@@ -39,11 +39,20 @@ function bodyOf(lines, i) {
   let depth = 0;
   for (let j = i; j < lines.length && j < i + 200; j += 1) {
     const l = lines[j];
-    out.push(l.trim());
+    out.push(l.replace(/\/\/.*$/, '').trim());
     depth += (l.match(/[{[]/g) || []).length - (l.match(/[}\]]/g) || []).length;
     if (j > i || /[{[]/.test(l)) { if (depth <= 0) break; } else if (/;\s*$/.test(l)) break;
   }
-  return out.join(' ').replace(/\s+/g, ' ').replace(/\/\*.*?\*\//g, '').replace(/;\s*}/g, ' }');
+  // Strip comments BEFORE collapsing whitespace. Doing it the other way round
+  // leaves a double space where the comment was, so a documented declaration
+  // never matched its undocumented twin and every such pair read as drift —
+  // which is the noisy failure this tool exists to avoid, committed by the tool.
+  return out.join(' ')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/;\s*}/g, ' }')
+    .replace(/,\s*}/g, ' }')
+    .trim();
 }
 
 const decls = new Map(); // name -> [{ file, body }]
@@ -88,8 +97,14 @@ if (!dupes.length) {
   if (dupes.length > 25) console.log(`  … and ${dupes.length - 25} more`);
   console.log(`\n  ${dupes.length} duplicated · ${crossLayer.length} cross-layer · ${drifted.length} already drifted`);
   if (drifted.length) {
-    console.log('\n  A drifted pair is not a future problem. One side is already missing');
-    console.log('  something the other sends. Give the name one home and re-export it.');
+    console.log('\n  A drifted pair is not a future problem: one side is already missing');
+    console.log('  something the other has. Three different things hide in this list, and');
+    console.log('  they want three different fixes:');
+    console.log('    · one concept, copied      → give it one home, re-export from the other');
+    console.log('    · one entity, many views   → derive each from the canonical type (Pick<…>)');
+    console.log('    · different concepts, one name → rename them apart; nothing to unify');
+    console.log('  Only the first is a contract to share. Widening a view type until it');
+    console.log('  covers every screen makes each screen depend on fields it never reads.');
   }
 }
 
