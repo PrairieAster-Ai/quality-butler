@@ -153,7 +153,22 @@ Keep the docs true to the code:
 - Run the project's **doc-publish flow** to refresh living docs (e.g. `/code-readability
   publish` / `team`, plus any stamp scripts). Respect generator markers — never clobber
   hand-authored pages.
-- Only publish when the code surface actually changed; a no-op refresh should produce no diff.
+- **Preflight the generators, and treat a refusal as a finding.** Doc generators shell out
+  to tooling the repo may not have installed — `/code-readability` needs
+  `react-docgen-typescript` and `typedoc`, and exits early with a "not installed" message
+  when they are missing. **Check the exit code of every step in the flow.** A non-zero exit
+  or a "not installed" line is a finding to report and, where the fix is a devDependency, an
+  auto-fix PR — never a step to skip quietly.
+- **A no-op refresh only means "nothing changed" if nothing changed.** This is the rule that
+  hides the failure above: a generator that ran and produced nothing looks identical to a
+  codebase that did not move. So decide from the sweep range, not the diff — **if the range
+  contains changes to the documented surface and the doc step produced no diff, say so.**
+  That is evidence the generator did not see the code, and it is how one repo's reference
+  pages came to describe 59% of it while every weekly run reported success.
+- **Report coverage, not "docs refreshed."** If the project exposes a doc-coverage or drift
+  number (`/code-health`'s doc %, a `reference:drift`-style script), state it with its delta.
+  A number that does not move across a sweep in which the code did is the same silent
+  failure, one level up.
 - **Publisher boundary (for future targets):** treat "publish the docs" as a step with a
   swappable backend (GitHub wiki today; other targets later). Adding a backend must not
   change the logic above.
@@ -161,7 +176,7 @@ Keep the docs true to the code:
 ### 5. Report
 End with a tight summary: detected mode · metric deltas (if any) · gate verdict (if a policy is
 set) · the auto-fix / draft-fix PR links (if any) · the count + links of suggestions raised (and
-how many the suggestion policy suppressed) · docs refreshed. In CI the completion notification
+how many the suggestion policy suppressed) · docs refreshed **with their coverage number and its delta** (or, if the doc step produced no diff while the sweep range touched documented code, that fact stated plainly). In CI the completion notification
 carries this; locally it's your final message.
 
 - **Self-effectiveness line.** The shipped workflow records the butler's own output

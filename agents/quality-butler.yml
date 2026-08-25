@@ -90,6 +90,10 @@ jobs:
       # while every run reported success. Drop this step if you add them as
       # devDependencies instead.
       - run: npm i -D --no-save react-docgen-typescript typedoc typedoc-plugin-markdown
+      # Fail here rather than three steps later in a doc publish that produces
+      # nothing and reports success. Skip if your repo has no doc generation.
+      - run: node .claude/skills/code-readability/scripts/check-tools.mjs
+        continue-on-error: true   # advisory until you rely on doc generation
 
       - name: Install the composed skills + agent definition from canonical
         # Headless CI loads PROJECT skills (./.claude/skills/<name>/SKILL.md) and the

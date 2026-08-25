@@ -110,6 +110,17 @@ Rules:
 
 ## Phase 3 — Generate (hybrid: tools + prose)
 
+**Step 0 — preflight, every time:**
+
+```bash
+node <skill>/scripts/check-tools.mjs      # exits non-zero if the tool layer is missing
+```
+
+Not optional and not a formality. Without the tools the layer below exits early, the page
+assembly has nothing to assemble, and the run reports success — indistinguishable from a week
+in which no code changed. If this exits non-zero, **stop and report it**; installing the two
+packages is the fix, and it is a one-line devDependency change.
+
 Deterministic structure from the tools, narrative from the model. Both layers read the **same** TSDoc, so prose and tables can't drift from the code.
 
 **Tool layer** (`references/doc-generation.md` has exact commands):
@@ -205,6 +216,7 @@ The Reference / Page-Anatomy pages document the **code**; the Team pages documen
 | `SKILL.md` | This file — modes + workflow |
 | `references/comment-style.md` | The TSDoc house style: rules + good/bad examples |
 | `references/doc-generation.md` | Hybrid pipeline: tool commands, page layout, wiki publish |
+| `scripts/check-tools.mjs` | Preflight: is the doc tool layer installed? Exits non-zero if not |
 | `scripts/extract-docs.mjs` | `react-docgen-typescript` → component-doc JSON/Markdown |
 | `scripts/wiki-slug.mjs` | Canonical GitHub heading-anchor slug (`ghSlug`) — use for every `[text](#anchor)` link |
 | `scripts/gen-schema-page.mjs` | Generate the Database-Schema wiki page from `schema.ts` (table TSDoc + parsed columns) |
