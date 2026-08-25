@@ -10,6 +10,7 @@
 //   node run-all.mjs --stamp wiki/Code-Health-Dashboard.md wiki/Home.md
 //
 import { execSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,6 +19,22 @@ const argv = process.argv.slice(2);
 const stampIdx = argv.indexOf('--stamp');
 const stampTargets = stampIdx >= 0 ? argv.slice(stampIdx + 1) : [];
 const passthru = argv.includes('--no-write') ? '--no-write' : '';
+
+// **Refuse to run a copy the repo did not pin.** A repo that vendors this skill
+// into .claude/skills is telling you which build its history and its CI agree
+// on; running a different one (a global ~/.claude/skills install, say) produces
+// numbers that look fine and are not comparable to the rows already recorded.
+// A wrong reading is worse than no reading, because it comes with a narrative.
+// Pass --any-copy when you mean it.
+const pinned = path.join(process.cwd(), '.claude/skills/code-health/scripts');
+if (fs.existsSync(pinned) && path.resolve(pinned) !== path.resolve(DIR) && !argv.includes('--any-copy')) {
+  console.error(`✗ this repo pins its own copy of code-health, and you are running a different one.
+    running: ${DIR}
+    pinned:  ${pinned}
+  Run the pinned copy, or pass --any-copy if you know the builds match.`);
+  process.exit(1);
+}
+console.log(`code-health — running ${DIR}\n`);
 
 // Producers first (each independent), roll-up last (reads their TSVs).
 const producers = [

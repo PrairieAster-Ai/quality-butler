@@ -65,9 +65,15 @@ toolchain / `npx`.
   producers then the roll-up). Add `--no-write` to print without appending history.
 - **`refresh`** — regenerate the dashboard: `run-all.mjs --stamp <wiki>/Code-Health-Dashboard.md <wiki>/Home.md` fills the `<!--ch:*-->` markers.
 
-Suggested `package.json` aliases. Point them at wherever the skill is installed —
-`.claude/skills/code-health/scripts/…` when it's vendored into the project (the quality-butler
-model, shown below), or `~/.claude/skills/code-health/scripts/…` for a global install:
+**If the repo vendors this skill into `.claude/skills/code-health`, run that copy.**
+A vendored copy is pinned to the commit the repo's CI uses, and the recorded history
+was produced by it. A global `~/.claude/skills` install can be an older build, and an
+older build writes fewer columns than the history names — the reader keys on header
+position, finds nothing, and falls back to a default, so you get a plausible grade
+with a wrong number in it and a narrative explaining the change. `run-all.mjs` now
+refuses this: it exits 1 when a pinned copy exists and you are running another one.
+
+Suggested `package.json` aliases — always the vendored path when there is one:
 
 ```jsonc
 "mi:report":             "node .claude/skills/code-health/scripts/maintainability-report.mjs",

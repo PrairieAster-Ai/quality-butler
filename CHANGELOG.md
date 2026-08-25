@@ -3,6 +3,118 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.6.2] — 2026-08-25
+
+**A stale copy of the skill produced a plausible grade with a wrong number in it.**
+A repo pinned code-health into `.claude/skills`; a global `~/.claude/skills` install
+was run instead. The older build wrote fewer columns than the history named, the
+reader keyed on header position, found nothing at the end of the line, and fell back
+to a default: Resilience silently re-scored the single worst file instead of the 5th
+percentile, and the grade dropped 12.6 points, complete with a narrative explaining
+the decline. Nothing errored.
+
+### Added
+
+- `run-all.mjs` **refuses to run a copy the repo did not pin.** If
+  `./.claude/skills/code-health/scripts` exists and is not the copy being executed, it
+  exits 1 and names both paths. `--any-copy` overrides. It also now prints which
+  directory it is running from, every time.
+- `appendHistory` **rejects a row narrower than its header** — the second line of
+  defense, for repos with no vendored copy. v0.6.0 taught it to widen a history when a
+  producer *adds* a column; the reverse case is the dangerous one, because it is silent.
+
+### Changed
+
+- `SKILL.md` no longer offers the global path as an equal alternative: when a repo
+  vendors the skill, that is the copy to run.
+- `plugin.json` and this changelog were three minor versions behind the tags; entries
+  for 0.4.0 through 0.6.1 are reconstructed below from the tagged commits.
+
+## [0.6.1] — 2026-08-25
+
+### Fixed
+
+- **A schema is not another layer.** Cross-layer change-coupling counted a database
+  schema module and its callers as a layer crossing, so splitting a schema into
+  domain files registered as new coupling rather than less.
+
+## [0.6.0] — 2026-08-25
+
+### Fixed
+
+- **Resilience scored one unlucky file.** The dimension read the single lowest MI in
+  the repo, so one dense module set the whole score and no amount of work elsewhere
+  moved it. It now reads the 5th percentile and reports the worst file alongside.
+- **`appendHistory` hid new columns.** The header was written only when the file was
+  created, so a newly added column arrived in every row and was named in none. The
+  roll-up went on scoring the old statistic for a full reading. It now widens the
+  header and pads existing rows.
+
+## [0.5.0] — 2026-08-25
+
+### Fixed
+
+- **Structure was absolute where it should have been a share.** Cross-layer coupled
+  pairs were scored as a raw count, which punishes a large repo for being large. The
+  dimension now scores the proportion of coupled pairs that cross a layer.
+
+## [0.4.6] — 2026-08-25
+
+### Fixed
+
+- **The capability checklist reported working controls as absent.** Probes missed
+  controls that were configured in ways the checklist did not recognize, so a repo
+  was told to enable gates it was already enforcing.
+
+## [0.4.5] — 2026-08-25
+
+### Added
+
+- **Readings record what was measured.** `scope` and `method` columns on the roll-up
+  history, so a change in which directories are scanned, or in how a dimension is
+  computed, is legible as a measurement change rather than read as a regression.
+
+## [0.4.4] — 2026-08-25
+
+### Fixed
+
+- **The trend chart is the part stakeholders read, and it misled.** Axis and series
+  choices made ordinary variation look like decline.
+
+## [0.4.3] — 2026-08-25
+
+### Added
+
+- One trend, and an empty `coverageWorkspaces` config that reports the gap instead of
+  crashing.
+
+## [0.4.2] — 2026-08-25
+
+### Fixed
+
+- **A doc step that produced nothing could report success.** The butler's
+  documentation step passed on an empty work list.
+
+## [0.4.1] — 2026-08-25
+
+### Fixed
+
+- **CI never installed the tool layer it generates from.** `code-readability` ran its
+  doc generation without `react-docgen-typescript` or TypeDoc present.
+
+## [0.4.0] — 2026-07-27
+
+### Added
+
+- The dashboard's business-meaning layer: metrics grouped by risk, throughput, and
+  onboarding rather than by tool.
+- A calendar-time CodeHealth trend chart and score-over-time table in the portfolio
+  report.
+
+### Changed
+
+- README: clarified what the butler does and documented the plugin install path.
+
 ## [0.3.0] — 2026-07-14
 
 **Rebrand: quality-steward → quality-butler.** The agent, the repo, the plugin, and all

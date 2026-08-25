@@ -124,5 +124,24 @@ export function appendHistory(file, header, row) {
       fs.writeFileSync(file, lines.join('\n'));
     }
   }
+  // **A narrower row means an older copy of this skill is running.** The block
+  // above widens a history when a producer *adds* a column; the reverse is the
+  // dangerous case. A stale script writes fewer fields than the header names,
+  // the reader keys on header position, finds nothing at the end of the line,
+  // and falls back to a default — producing a plausible reading with a
+  // confidently wrong number in it. Observed when a global copy of this skill
+  // shadowed a repo's pinned one: MI's p5 and the roll-up's scope/method went
+  // missing, Resilience silently re-scored the single worst file instead of the
+  // 5th percentile, and the grade fell 12.6 points with a narrative explaining
+  // the drop. Refuse the row rather than record it.
+  const cols = header.replace(/\n$/, '').split('\t').length;
+  const got = row.replace(/\n$/, '').split('\t').length;
+  if (got < cols) {
+    throw new Error(
+      `${path.basename(file)}: producer wrote ${got} fields, header names ${cols}. `
+      + 'This build of the skill is older than the history it is appending to. '
+      + 'Run the copy the repo pins (.claude/skills/code-health) rather than a global one.',
+    );
+  }
   fs.appendFileSync(file, row);
 }
