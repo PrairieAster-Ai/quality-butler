@@ -104,6 +104,38 @@ Full formulas, bands, and the "why health-proportion not the MI mean" rationale
 live in `references/methodology.md`. Grade bands: A ≥ 90 · B 80–89 · C 70–79 ·
 D 60–69 · F < 60.
 
+## No silent defaults
+
+Every dimension reports **whether it observed anything**. This used to be
+implicit and generous: a missing security history meant `0 critical / 0 high`, a
+missing coupling history meant zero coupled pairs, a doc probe that failed to
+match meant 100% documented. A repo with no source files and no measurement
+history scored Maintainability 100 and Security 100 — positive claims about work
+nobody had done.
+
+- A dimension with no input reads **NOT MEASURED** and is excluded from the score.
+- A reading missing any dimension is a **partial reading: it gets no grade**, and
+  the executive summary says the reading is incomplete instead of describing a
+  codebase it did not measure. Renormalizing over the measured weight is the same
+  mistake wearing a different hat — scoring one dimension out of six produced
+  "100/100, grade A" for an empty repo.
+- A partial reading is **refused entry to the trend**, because the chart draws a
+  line between it and a complete one as though they were comparable.
+  `--allow-partial` records it anyway, for a repo not yet instrumented.
+
+## Negative controls
+
+`node <skill>/scripts/selftest.mjs` plants known-bad input and asserts each gate
+fires: an unmeasured dimension, a partial reading, a history row narrower than
+its header, a copy of the skill the repo did not pin. Each negative is paired
+with a positive so the suite cannot pass by having everything break.
+
+**A gate that has never been shown to fail has not been shown to work.** Several
+of these were inert at some point and passed while inert — a mermaid check that
+passed on an empty diagram list, a doc generator that exited 0 with none of its
+tooling installed, a trend chart drawn from a history nobody wrote. Run it in CI;
+the plugin repo runs it on every push.
+
 ## The dashboard
 
 `Code-Health-Dashboard.md` (wiki) is the single rendering. Hand-authored prose +

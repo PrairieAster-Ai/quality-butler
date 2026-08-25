@@ -3,6 +3,45 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.7.0] — 2026-08-25
+
+**Absence of evidence was scored as evidence of health.** Every dimension fell
+back to a hardcoded default when its input was missing, and each default was a
+good value: no security history meant zero advisories, no coupling history meant
+zero coupled pairs, a doc probe that failed to match meant 100% documented. A
+repo with no source files and no measurement history at all scored Maintainability
+100 and Security 100. It only avoided an A because two dimensions divided by zero.
+
+This is the same failure as v0.6.2's stale-copy bug, one level up: a missing input
+becomes a plausible number, and a number gets a narrative attached to it.
+
+### Changed
+
+- **Dimensions report whether they measured anything.** One with no input reads
+  `NOT MEASURED` and is excluded from the score rather than defaulted.
+- **A partial reading gets no grade.** Renormalizing over the measured weight was
+  the same mistake in a new place: scoring one dimension out of six produced a
+  headline of "100/100, grade A — strong, well-governed shape" for an empty repo.
+  The executive summary now says the reading is incomplete instead of describing
+  a codebase it did not measure.
+- **A partial reading is refused entry to the trend** — the chart would draw a
+  line between it and a complete reading as though they were comparable.
+  `--allow-partial` overrides, for a repo not yet instrumented.
+
+### Added
+
+- `skills/code-health/scripts/selftest.mjs` — negative controls. Plants known-bad
+  input and asserts each gate fires, pairing every negative with a positive so
+  the suite cannot pass by having everything break. Nine checks. Every one was
+  mutation-tested: break the guard, watch the check go red.
+- `scripts/check-manifests.mjs` — plugin.json must point at paths that exist,
+  advertise every skill on disk, and match the newest changelog entry. It drifted
+  three minor versions behind the tags before anyone noticed.
+- **CI, for the first time.** This repo audits other repos and had no automated
+  check of its own, so its gates were verified by hand once, at the moment they
+  were written, and several were inert for weeks afterwards while reporting
+  success. `.github/workflows/ci.yml` runs both scripts on every push and PR.
+
 ## [0.6.2] — 2026-08-25
 
 **A stale copy of the skill produced a plausible grade with a wrong number in it.**

@@ -1,0 +1,22 @@
+# The tool that audits other repos had no CI of its own, so its gates were only
+# ever verified by hand, once, at the moment they were written. Several of them
+# were inert for weeks afterwards and still reported success.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: manifests agree with the tree and the changelog
+        run: node scripts/check-manifests.mjs
+      - name: negative controls (every gate must fail when broken)
+        run: node skills/code-health/scripts/selftest.mjs

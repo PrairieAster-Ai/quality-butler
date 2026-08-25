@@ -129,19 +129,53 @@ const crossShare = coupledPairs >= MIN_PAIRS_FOR_SHARE
   : crossLayer * 5;
 const structureScore = Math.max(0, 100 - 25 * cycles - crossShare);
 
+/**
+ * Whether each dimension actually observed anything.
+ *
+ * **Absence of evidence was being scored as evidence of health.** Every
+ * dimension used to fall back to a hardcoded default when its input was
+ * missing: no security history meant `0 critical / 0 high`, no coupling history
+ * meant zero coupled pairs, a doc probe that failed to match meant 100%
+ * documented. A repo with no source files and no measurement history at all
+ * scored Maintainability 100 and Security 100 — positive claims about work
+ * nobody had done. The failure this shipped to fix was the same shape one level
+ * down: a missing `p5_mi` column silently re-scored Resilience on a different
+ * statistic, and the reading came with a narrative explaining the drop.
+ *
+ * A default turns "I did not measure this" into a number, and a number gets
+ * believed. So each dimension now says whether it has a real observation behind
+ * it, and an unmeasured one is excluded rather than guessed.
+ */
+const docDenom = docMatch ? Number(docMatch[2]) : 0;
 const dims = [
-  { key: 'Documentation', weight: 0.20, raw: `${r1(docPct)}% TSDoc`, score: norm(docPct, 100, 50) },
-  { key: 'Maintainability', weight: 0.25, raw: `${r1(healthPct)}% MI-healthy (${greenFiles}🟢/${yellowFiles}🟡)`, score: norm(healthPct, 100, 70) },
-  { key: 'Structure', weight: 0.20, raw: `${cycles} cycles · ${crossLayer}/${coupledPairs || 0} cross-layer`, score: structureScore },
-  { key: 'Resilience (worst files)', weight: 0.10, raw: `MI p5 ${r1(p5Mi)} · worst ${r1(minMi)}`, score: norm(p5Mi, 25, 5) },
-  { key: 'Type & size safety', weight: 0.15, raw: `${anyCount} any · ${over500} files >500`, score: (norm(anyCount, 0, 30) + norm((over500 / files.length) * 100, 0, 10)) / 2 },
-  { key: 'Security (deps)', weight: 0.10, raw: `${sevCritical}C/${sevHigh}H/${sevModerate}M advisories`, score: securityScore },
+  { key: 'Documentation', weight: 0.20, measured: docDenom > 0, raw: `${r1(docPct)}% TSDoc`, score: norm(docPct, 100, 50) },
+  { key: 'Maintainability', weight: 0.25, measured: !!mi && miFiles > 0, raw: `${r1(healthPct)}% MI-healthy (${greenFiles}🟢/${yellowFiles}🟡)`, score: norm(healthPct, 100, 70) },
+  { key: 'Structure', weight: 0.20, measured: !!cc && circRun.out !== '', raw: `${cycles} cycles · ${crossLayer}/${coupledPairs || 0} cross-layer`, score: structureScore },
+  { key: 'Resilience (worst files)', weight: 0.10, measured: !!mi && miFiles > 0, raw: `MI p5 ${r1(p5Mi)} · worst ${r1(minMi)}`, score: norm(p5Mi, 25, 5) },
+  { key: 'Type & size safety', weight: 0.15, measured: files.length > 0, raw: `${anyCount} any · ${over500} files >500`, score: (norm(anyCount, 0, 30) + norm((over500 / files.length) * 100, 0, 10)) / 2 },
+  { key: 'Security (deps)', weight: 0.10, measured: !!sec, raw: `${sevCritical}C/${sevHigh}H/${sevModerate}M advisories`, score: securityScore },
 ];
 
-const score = dims.reduce((s, d) => s + d.weight * d.score, 0);
+// Score over the weight actually observed, and report that share. A partial
+// reading is reported as partial rather than quietly renormalized into a number
+// that reads like a whole one.
+const measuredWeight = dims.filter((d) => d.measured).reduce((s, d) => s + d.weight, 0);
+const coveragePct = Math.round(measuredWeight * 100);
+const unmeasured = dims.filter((d) => !d.measured);
+const score = measuredWeight > 0
+  ? dims.filter((d) => d.measured).reduce((s, d) => s + d.weight * d.score, 0) / measuredWeight
+  : 0;
 /** The letter for any score. One definition, so the headline and the trend agree. */
 const gradeOf = (n) => (n >= 90 ? 'A' : n >= 80 ? 'B' : n >= 70 ? 'C' : n >= 60 ? 'D' : 'F');
-const grade = gradeOf(score);
+/**
+ * **A partial reading has no grade.** Renormalizing over the measured weight is
+ * the same mistake wearing a different hat: excluding five of six dimensions and
+ * scoring the survivor produced a headline of "100/100, grade A — strong,
+ * well-governed shape" for a repo with no source files in it. Scoring 15% of the
+ * weight and printing a grade is not a partial answer, it is a wrong one.
+ */
+const partial = unmeasured.length > 0;
+const grade = partial ? '—' : gradeOf(score);
 
 // ── Interpretation layer (business meaning + relative context) ────────────────
 // Promotes the dashboard's "metrics by business outcome / why it's worth money"
@@ -271,6 +305,12 @@ function trendWord(scoreDelta) {
 // ch:exec — the screenshot-survivable executive summary (a VP can repeat the
 // headline verbatim). Leads with the verdict; the number is supporting evidence.
 function buildExec() {
+  // Say the reading is incomplete. Do not characterize a codebase you did not measure.
+  if (partial) {
+    return `**🩺 CodeHealth: incomplete reading — ${coveragePct}% of the weight measured.**\n\n`
+      + `- ⚠ **No grade.** ${unmeasured.map((d) => d.key).join(', ')} produced no observation, so there is nothing to score them on.\n`
+      + '- 🔧 **Next:** run the producers (`run-all.mjs` sequences them) and take the reading again.';
+  }
   const scoreDelta = prevReading && Number.isFinite(Number(prevReading.score))
     ? r1(score - Number(prevReading.score)) : null;
   const deltaClause = scoreDelta === null ? 'no prior reading yet'
@@ -467,12 +507,33 @@ function pieMarkdown() {
   return rows.join('\n');
 }
 
-console.log(`\n┌─ CodeHealth: ${r1(score)} / 100  (grade ${grade}) ─ a weighted blend of the dashboard's dimensions`);
+console.log(partial
+  ? `\n┌─ CodeHealth: PARTIAL READING — no grade (${coveragePct}% of the weight measured)`
+  : `\n┌─ CodeHealth: ${r1(score)} / 100  (grade ${grade}) ─ a weighted blend of the dashboard's dimensions`);
 for (const d of dims) {
-  console.log(`│  ${d.key.padEnd(24)} ${String(r1(d.score)).padStart(5)}  × ${d.weight.toFixed(2)}   (${d.raw})`);
+  const cell = d.measured ? String(r1(d.score)).padStart(5) : '    —';
+  const note = d.measured ? `(${d.raw})` : '(NOT MEASURED — no input; excluded from the score)';
+  console.log(`│  ${d.key.padEnd(24)} ${cell}  × ${d.weight.toFixed(2)}   ${note}`);
+}
+if (unmeasured.length) {
+  console.log(`│`);
+  console.log(`│  ⚠ measured ${coveragePct}% of the weight. This is a PARTIAL reading, not a grade.`);
+  console.log(`│    missing: ${unmeasured.map((d) => d.key).join(', ')}`);
 }
 console.log(`└─ gates (pass/fail, enforced in CI): lint · types · tests`);
 console.log(`\n${buildExec()}`); // the generated executive summary (also stamped as ch:exec)
+
+// **A partial reading must not join the trend.** A row scored over 65% of the
+// weight sits in the same column as one scored over all of it, and the chart
+// draws a line between them as though they were comparable. Refuse it; say what
+// is missing. `--allow-partial` records it anyway for the genuinely incomplete
+// first run of a repo that has not been instrumented yet.
+if (WRITE && unmeasured.length && !process.argv.includes('--allow-partial')) {
+  console.error(`\n✗ refusing to record a partial reading (${coveragePct}% of the weight measured).`);
+  console.error(`  not measured: ${unmeasured.map((d) => d.key).join(', ')}`);
+  console.error('  Run the producers first (run-all.mjs sequences them), or pass --allow-partial.');
+  process.exit(1);
+}
 
 if (WRITE) {
   fs.mkdirSync(HISTORY_DIR, { recursive: true });
