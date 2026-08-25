@@ -15,7 +15,7 @@ TSV rows).
 |---|--:|---|
 | Documentation | 20% | doc coverage % (100% → 100, 50% → 0) |
 | Maintainability | 25% | MI health proportion = (green + ½·yellow) / files (100% → 100, 70% → 0) |
-| Structure | 20% | `100 − 25·cycles − 5·cross_layer_pairs` |
+| Structure | 20% | `100 − 25·cycles − %·of coupled pairs that cross a layer` (absolute `5·pairs` below 10 coupled pairs, where the share is too noisy) |
 | Resilience (worst file) | 10% | lowest single-file MI (25 → 100, 5 → 0) |
 | Type & size safety | 15% | `any` count (0→100, 30→0) + files>500 LOC, averaged |
 | Security (deps) | 10% | `100 − 25·critical − 10·high − 1·moderate − 0.25·low` |

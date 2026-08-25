@@ -55,7 +55,19 @@ const yellowFiles = mi ? Number(mi.yellow) : 0;
 const miFiles = mi ? Number(mi.files) : files.length;
 const redFiles = Math.max(0, miFiles - greenFiles - yellowFiles);
 const minMi = mi ? Number(mi.min_mi) : 20;
+/**
+ * Bumped whenever a dimension's formula changes.
+ *
+ * **A score is comparable to another only if the formula was the same.** When
+ * Structure moved from `100 − 5·pairs` to a share-based penalty, one repo's
+ * score jumped 11 points between two consecutive commands with no code change
+ * in between. Recorded here so the trend can say that, instead of drawing it as
+ * a very good week.
+ */
+const METHOD_VERSION = '2';
 const crossLayer = cc ? Number(cc.cross_layer) : 0;
+/** Total coupled pairs, the denominator that makes cross-layer scale-free. */
+const coupledPairs = cc ? Number(cc.coupled_pairs) : 0;
 
 const sevCritical = sec ? Number(sec.critical) : 0;
 const sevHigh = sec ? Number(sec.high) : 0;
@@ -66,10 +78,39 @@ const securityScore = Math.max(0, 100 - 25 * sevCritical - 10 * sevHigh - 1 * se
 // MI **health proportion**: share of files in good MI shape (yellow half, red none).
 const healthPct = miFiles ? ((greenFiles + 0.5 * yellowFiles) / miFiles) * 100 : 100;
 
+/**
+ * Structure: circular imports, and how much of your change-coupling crosses a layer.
+ *
+ * **Was `100 − 5·crossLayerPairs`, which had two defects.** It was absolute, so
+ * 16 pairs cost a 268-file monorepo exactly what it costs a 30-file service
+ * although larger repos accumulate pairs mechanically. And it hit zero at 20
+ * pairs, after which more coupling was free and any improvement invisible until
+ * you crossed back under — a measure that has stopped discriminating.
+ *
+ * It is now the **share** of coupled pairs that cross a layer, which is
+ * scale-free and matches the stated intent: cross-layer coupling is the smell,
+ * within-feature coupling is usually fine. The penalty is simply that
+ * percentage, so it reads without a lookup — "a third of your co-change crosses
+ * a layer" costs 33.
+ *
+ * **Cycles stay absolute and stay harsh.** Zero is achievable in any codebase
+ * and is the gate; there is no denominator that makes a circular import
+ * proportionate.
+ *
+ * Below `MIN_PAIRS_FOR_SHARE` the share is too noisy to use — two coupled pairs
+ * that both cross a layer is 100%, and means almost nothing — so the old
+ * absolute rule still applies to repos with little co-change history.
+ */
+const MIN_PAIRS_FOR_SHARE = 10;
+const crossShare = coupledPairs >= MIN_PAIRS_FOR_SHARE
+  ? (crossLayer / coupledPairs) * 100
+  : crossLayer * 5;
+const structureScore = Math.max(0, 100 - 25 * cycles - crossShare);
+
 const dims = [
   { key: 'Documentation', weight: 0.20, raw: `${r1(docPct)}% TSDoc`, score: norm(docPct, 100, 50) },
   { key: 'Maintainability', weight: 0.25, raw: `${r1(healthPct)}% MI-healthy (${greenFiles}🟢/${yellowFiles}🟡)`, score: norm(healthPct, 100, 70) },
-  { key: 'Structure', weight: 0.20, raw: `${cycles} cycles · ${crossLayer} cross-layer`, score: Math.max(0, 100 - 25 * cycles - 5 * crossLayer) },
+  { key: 'Structure', weight: 0.20, raw: `${cycles} cycles · ${crossLayer}/${coupledPairs || 0} cross-layer`, score: structureScore },
   { key: 'Resilience (worst file)', weight: 0.10, raw: `min MI ${r1(minMi)}`, score: norm(minMi, 25, 5) },
   { key: 'Type & size safety', weight: 0.15, raw: `${anyCount} any · ${over500} files >500`, score: (norm(anyCount, 0, 30) + norm((over500 / files.length) * 100, 0, 10)) / 2 },
   { key: 'Security (deps)', weight: 0.10, raw: `${sevCritical}C/${sevHigh}H/${sevModerate}M advisories`, score: securityScore },
@@ -296,10 +337,13 @@ function buildTrend(n = 12) {
       // ordinary — a scheduled sweep plus a manual check — and plotting both draws
       // a flat segment that reads as "a week where nothing improved".
       const ci = header.indexOf('scope');
+      const mi = header.indexOf('method');
       const byDate = new Map();
       for (const v of lines.slice(1).map((l) => l.split('\t'))) {
         const date = v[di]; const score = Number(v[si]);
-        if (date && Number.isFinite(score)) byDate.set(date, { date, score, scope: ci >= 0 ? v[ci] : '' });
+        if (date && Number.isFinite(score)) {
+          byDate.set(date, { date, score, scope: ci >= 0 ? v[ci] : '', method: mi >= 0 ? v[mi] : '' });
+        }
       }
       series = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-n);
     }
@@ -373,6 +417,14 @@ function scopeNote(series) {
       changes.push(`${known[i].date} (${what || 'scope changed'})`);
     }
   }
+  // Same treatment for a formula change: a dimension rescored is a new ruler,
+  // and a step drawn under a new ruler is not progress.
+  const scored = series.filter((p) => p.method);
+  for (let i = 1; i < scored.length; i += 1) {
+    if (scored[i].method !== scored[i - 1].method) {
+      changes.push(`${scored[i].date} (scoring formula v${scored[i - 1].method} → v${scored[i].method})`);
+    }
+  }
   if (!changes.length) return [];
   return ['', `> **What is measured changed during this period:** ${changes.join('; ')}. `
     + 'Readings either side are not directly comparable, and a step at that point '
@@ -408,9 +460,9 @@ if (WRITE) {
   // same scope, so the scope travels with it and the chart can say when it moved.
   const scope = (DIRS || []).join(',');
   if (!fs.existsSync(HISTORY)) {
-    fs.writeFileSync(HISTORY, `date\tscore\tgrade\t${dims.map((d) => d.key.toLowerCase().replace(/[^a-z]+/g, '_')).join('\t')}\tscope\n`);
+    fs.writeFileSync(HISTORY, `date\tscore\tgrade\t${dims.map((d) => d.key.toLowerCase().replace(/[^a-z]+/g, '_')).join('\t')}\tscope\tmethod\n`);
   }
-  fs.appendFileSync(HISTORY, `${today()}\t${r1(score)}\t${grade}\t${dims.map((d) => r1(d.score)).join('\t')}\t${scope}\n`);
+  fs.appendFileSync(HISTORY, `${today()}\t${r1(score)}\t${grade}\t${dims.map((d) => r1(d.score)).join('\t')}\t${scope}\t${METHOD_VERSION}\n`);
   const stampObj = {
     badge: `${grade} · ${r1(score)} / 100`,
     exec: buildExec(), outcomes: buildOutcomes(), roi: buildRoi(),
