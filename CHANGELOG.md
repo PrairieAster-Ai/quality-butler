@@ -3,6 +3,22 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.10.1] — 2026-08-25
+
+### Fixed
+
+- **`duplicate-declarations` reported its own recommended fix as a finding.** For
+  one entity with many views it advises deriving each view from a canonical type;
+  the derived alias was then counted as a second declaration of the name, so
+  following the advice made the number worse. A type built from `Pick`, `Omit`,
+  `Partial`, `Required` or `typeof` is derived by construction — it cannot exist
+  without something to derive from — and is no longer counted as a competing
+  declaration.
+
+  Worked through on the repo that prompted it: 23 duplicated declarations and 16
+  drifted became 3 and 0, and 12 of those were only reachable once the tool
+  stopped objecting to the fix.
+
 ## [0.10.0] — 2026-08-25
 
 ### Added

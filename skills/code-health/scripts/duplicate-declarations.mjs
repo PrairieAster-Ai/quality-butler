@@ -64,8 +64,17 @@ for (const file of DIRS.flatMap(walk)) {
     if (!m || IGNORE.has(m[2])) return;
     // A re-export is the fix, not the problem: `export type { X } from '…'`.
     if (/\bfrom\s+['"]/.test(line)) return;
+    const body = bodyOf(lines, i);
+    // **A derivation is the fix, not another copy.** `type Location =
+    // Pick<Location, 'id' | 'name'>` in a screen, over a canonical row declared
+    // once, is exactly what this tool asks for when it finds one entity with
+    // many views — and counting it as a second declaration meant the
+    // recommended fix produced a finding. A utility type is derived by
+    // construction: it cannot exist without something to derive from.
+    if (/=\s*(Pick|Omit|Partial|Required|Readonly|Exclude|Extract|Record|ReturnType|Awaited)\s*</.test(body)
+      || /=\s*typeof\s/.test(body)) return;
     if (!decls.has(m[2])) decls.set(m[2], []);
-    decls.get(m[2]).push({ file, body: bodyOf(lines, i) });
+    decls.get(m[2]).push({ file, body });
   });
 }
 
