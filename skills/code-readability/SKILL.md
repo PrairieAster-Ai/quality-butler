@@ -29,6 +29,15 @@ The skill is project-agnostic; set these knobs once for your repo. The scripts r
 | GitHub repo + blob base URL (for linkify) | passed as args to `linkify-wiki.mjs` (`<repo-root> <wiki-dir> https://github.com/<owner>/<repo>/blob/<branch>`) | — |
 | Domain concepts / terms to cross-link in prose | list your own project's terms (the model uses them as wiki cross-link targets) | — |
 
+> **Prerequisite — the tool layer needs two packages.** `generate`/`publish` shell
+> out to `react-docgen-typescript` (components) and `typedoc` +
+> `typedoc-plugin-markdown` (hooks/lib/api). They are intentionally *not* project
+> dependencies, so **install them before a first run** (`npm i -D
+> react-docgen-typescript typedoc typedoc-plugin-markdown`) or add the equivalent
+> step to CI. Without them the tool layer exits early and a publish produces
+> nothing while still reporting success — the failure mode that let one repo's
+> Reference pages drift to describing 59% of its code.
+
 > **The worked examples below are illustrative, not requirements.** They are drawn from the reference project this skill was built in — a residential-care menu app with a "Bill of Materials" food model — so the sample TSDoc, table names, and wiki page names reflect that domain. **Substitute your own domain throughout:** your symbols, your invariants, your schema, your architecture concepts.
 
 ## Modes
