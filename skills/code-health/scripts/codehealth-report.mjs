@@ -76,7 +76,9 @@ const dims = [
 ];
 
 const score = dims.reduce((s, d) => s + d.weight * d.score, 0);
-const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
+/** The letter for any score. One definition, so the headline and the trend agree. */
+const gradeOf = (n) => (n >= 90 ? 'A' : n >= 80 ? 'B' : n >= 70 ? 'C' : n >= 60 ? 'D' : 'F');
+const grade = gradeOf(score);
 
 // ── Interpretation layer (business meaning + relative context) ────────────────
 // Promotes the dashboard's "metrics by business outcome / why it's worth money"
@@ -267,11 +269,20 @@ function chartMarkdown() {
   rows.push('```');
   return rows.join('\n');
 }
-// Score-over-time trend for the dashboard: a Mermaid xychart-beta line chart of
-// the last N readings (clean to emit as a fenced block), with a Unicode-sparkline
-// fallback (+ first→last delta) if the chart can't be built. Reads the freshly
-// appended codehealth-history.tsv, so run this inside the WRITE block. Robust to
-// thin history: <2 readings → an "insufficient history" note rather than a crash.
+// Score-over-time trend for the dashboard.
+//
+// **Written to be read by somebody who does not know what an MI is.** The chart
+// is usually the only part of this page a stakeholder looks at, and the first
+// version of it misled in five separate ways: it plotted two readings taken on
+// the same day as two points (a flat step that means nothing), labelled the axis
+// `06-25` with no year, titled itself "last 12 readings" in internal jargon,
+// reported a delta measured across a sliding window so the same history produced
+// a different number every week, and gave a bare score with no way to know that
+// 73.7 is a C or where the bands sit.
+//
+// So: one point per day, dates a person can read, both grades named, and the
+// bands stated underneath. Unicode-sparkline fallback if the chart cannot be
+// built. Reads the freshly appended history, so run it inside the WRITE block.
 function buildTrend(n = 12) {
   const SPARK = '▁▂▃▄▅▆▇█';
   let series = [];
@@ -281,11 +292,15 @@ function buildTrend(n = 12) {
       const header = lines[0].split('\t');
       const di = header.indexOf('date');
       const si = header.indexOf('score');
-      series = lines.slice(1)
-        .map((l) => l.split('\t'))
-        .map((v) => ({ date: v[di], score: Number(v[si]) }))
-        .filter((p) => p.date && Number.isFinite(p.score))
-        .slice(-n);
+      // Collapse same-day readings to the last one taken. Two runs on one day is
+      // ordinary — a scheduled sweep plus a manual check — and plotting both draws
+      // a flat segment that reads as "a week where nothing improved".
+      const byDate = new Map();
+      for (const v of lines.slice(1).map((l) => l.split('\t'))) {
+        const date = v[di]; const score = Number(v[si]);
+        if (date && Number.isFinite(score)) byDate.set(date, { date, score });
+      }
+      series = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-n);
     }
   } catch { /* fall through to insufficient-history */ }
 
@@ -297,16 +312,31 @@ function buildTrend(n = 12) {
   const sign = delta > 0 ? '+' : '';
 
   try {
-    const labels = series.map((p) => `"${String(p.date).slice(5)}"`).join(', ');
+    const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    // "25 Jun" rather than "06-25": unambiguous, and readable by somebody who does
+    // not already know which end the month is on.
+    const human = (d) => {
+      const [, m, day] = String(d).split('-');
+      return `${Number(day)} ${MON[Number(m) - 1] ?? m}`;
+    };
+    const year = String(series[series.length - 1].date).slice(0, 4);
+    const labels = series.map((p) => `"${human(p.date)}"`).join(', ');
     const values = scores.map((s) => r1(s)).join(', ');
+    const span = `${human(series[0].date)} to ${human(series[series.length - 1].date)} ${year}`;
+    // Both ends named with their grade. A reader should not have to hold the band
+    // table in their head to know whether the line ending at 73.7 is good news.
+    const arc = `${gradeOf(first)} ${r1(first)} to ${gradeOf(last)} ${r1(last)}`;
     return [
       '```mermaid',
       'xychart-beta',
-      `    title "CodeHealth score — last ${series.length} readings (Δ ${sign}${delta})"`,
+      `    title "Code health, ${span} (${arc})"`,
       `    x-axis [${labels}]`,
-      '    y-axis "Score" 0 --> 100',
+      '    y-axis "Score, higher is better" 0 --> 100',
       `    line [${values}]`,
       '```',
+      '',
+      `_${series.length} readings, one point per day. Change over the period shown: `
+        + `**${sign}${delta}**. Grade bands: A 90+ · B 80-89 · C 70-79 · D 60-69 · F under 60._`,
     ].join('\n');
   } catch {
     // Fallback: Unicode sparkline scaled across the observed score range.
