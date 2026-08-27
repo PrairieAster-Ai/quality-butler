@@ -16,6 +16,7 @@
 //
 import fs from 'node:fs';
 import path from 'node:path';
+import { verdict } from './config.mjs';
 
 const OUT_STAMP = 'portfolio-stamp.json';
 const argv = process.argv.slice(2);
@@ -106,11 +107,17 @@ if (!rows.length) { console.error('portfolio: no readable stamps — nothing to 
 // Worst first (ascending score; nulls last).
 rows.sort((a, b) => (a.score ?? Infinity) - (b.score ?? Infinity));
 
+// A leader reads this table for 10 seconds — give every repo an explicit verdict
+// (config.mjs `verdict()`), not just a grade letter. Ungraded repos (no score)
+// stay neutral rather than being scored "Act now".
+const rowVerdict = (r) => (r.score == null ? { icon: '➖', word: 'No grade' } : verdict(r.score));
+
 const md = [];
-md.push('| Repo | Grade | Score | Top hotspot | Doc% | Security |');
-md.push('|---|:--:|--:|---|--:|--:|');
+md.push('| Repo | Status | Grade | Score | Top hotspot | Doc% | Security |');
+md.push('|---|:--|:--:|--:|---|--:|--:|');
 for (const r of rows) {
-  md.push(`| ${r.name} | ${r.grade} | ${r.score != null ? r.score : '—'} | ${r.top_hotspot} | ${r.doc_pct} | ${r.security} |`);
+  const v = rowVerdict(r);
+  md.push(`| ${r.name} | ${v.icon} ${v.word} | ${r.grade} | ${r.score != null ? r.score : '—'} | ${r.top_hotspot} | ${r.doc_pct} | ${r.security} |`);
 }
 const table = md.join('\n');
 console.log(`\n${table}\n`);
@@ -156,11 +163,35 @@ if (series.length) {
   console.log(`${trendChart}\n\n${trendTable}\n`);
 }
 
+// ── Executive summary (generated) — a screenshot-survivable headline a leader can
+// repeat, in the same voice as the per-repo dashboard's ch:exec. Counts repos by
+// verdict band and names the one to look at first. ──
+const meanGrade = meanScore == null ? '?'
+  : meanScore >= 90 ? 'A' : meanScore >= 80 ? 'B' : meanScore >= 70 ? 'C' : meanScore >= 60 ? 'D' : 'F';
+const band = (name) => scored.filter((r) => verdict(r.score).word === name).length;
+const healthy = band('Healthy'), watch = band('Watch'), act = band('Act now');
+const worst = scored[0]; // rows are worst-first
+const execLine = [
+  `**🗂️ Portfolio health: ${rows.length} repo${rows.length === 1 ? '' : 's'} · mean ${meanGrade} · ${meanScore ?? 'n/a'}/100.**`,
+  scored.length
+    ? ` ${healthy} healthy, ${watch} to watch, ${act} needing action` + (worst && verdict(worst.score).word !== 'Healthy' ? ` — start with **${worst.name}** (${worst.grade} · ${worst.score}).` : '.')
+    : ' No graded repos yet.',
+].join('');
+const exec = [
+  execLine,
+  '',
+  '<sub>Grades are absolute (A ≥90 … F <60), benchmarked against the same documented anchors every repo uses — comparable across the portfolio and over time. Sorted worst-first so attention lands where it pays back most.</sub>',
+].join('\n');
+console.log(`\n${exec}\n`);
+
 const aggregate = {
   generated: today,
+  exec,
   repos: rows.length,
   mean_score: meanScore,
+  mean_grade: meanGrade,
   by_grade: byGrade,
+  by_verdict: { healthy, watch, act },
   table,
   trend_chart: trendChart,
   trend_table: trendTable,

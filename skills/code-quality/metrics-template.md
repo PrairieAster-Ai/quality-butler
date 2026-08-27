@@ -227,23 +227,30 @@ Run these checks to collect all metrics. Use Bash for npm/npx commands and Claud
 
 ## Comparison Table (For Presentations)
 
+Lead the slide with a one-line verdict a non-technical leader can repeat, then let the table be the
+evidence. Frame each achievement as an outcome (risk down / speed up / less rework), not a raw
+metric delta.
+
 ```markdown
 ## Code Quality Journey
 
-| Metric | Day 1 | Sprint 1 | Sprint 2 | Sprint 3 | Final |
-|--------|-------|----------|----------|----------|-------|
-| Errors | | | | | |
-| Warnings | | | | | |
-| Coverage | | | | | |
-| Duplication | | | | | |
-| `any` Types | | | | | |
-| Large Files | | | | | |
-| Tests | | | | | |
+> **✅ [e.g. "Codebase health went from Needs-action to Healthy over 3 sprints."]**
+> [One sentence on the business payoff: fewer regressions, faster changes, easier onboarding.]
 
-**Key Achievements:**
--
--
--
+| Metric | Day 1 | Sprint 1 | Sprint 2 | Sprint 3 | Final | Verdict |
+|--------|-------|----------|----------|----------|-------|:------:|
+| Errors | | | | | | ✅/⚠️/❌ |
+| Warnings | | | | | | ✅/⚠️/❌ |
+| Coverage | | | | | | ✅/⚠️/❌ |
+| Duplication | | | | | | ✅/⚠️/❌ |
+| `any` Types | | | | | | ✅/⚠️/❌ |
+| Large Files | | | | | | ✅/⚠️/❌ |
+| Tests | | | | | | ✅/⚠️/❌ |
+
+**What this bought us** (outcomes, not metrics):
+- 🛡️ Lower risk — [e.g. "regressions caught before release, not after"]
+- 🚀 Higher throughput — [e.g. "changes ship faster with fewer surprises"]
+- 🧑‍💻 Lower key-person risk — [e.g. "any engineer can now work in these modules"]
 
 **Time Investment:**
 - Total Hours:

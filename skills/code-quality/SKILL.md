@@ -155,24 +155,34 @@ npm run lint && npm run type-check && npm test
 
 ## Output Format
 
-When reporting assessment results, use this format:
+This report gets pasted into leadership decks, so it must read for a non-technical
+audience — a verdict and a "so what," not bare numbers. (Same encoding principles as the
+code-health dashboard; see `code-health/references/methodology.md` and the **Audience-Personas**
+wiki page.) Lead with an executive summary; give every metric an explicit verdict and a
+plain-language business impact. Verdict banding: **✅** at/above *Good*, **⚠️** at/above *Minimum*,
+**❌** below *Minimum* (per the Metric Targets Reference above). Relative context uses honest
+yardsticks only — the metric's own target/last reading — never an invented "top X% of teams."
 
 ```markdown
-## Code Quality Assessment - [Date]
+## Code Quality Assessment — [Date]
+
+### Executive summary
+> **[✅ Healthy / ⚠️ Watch / ❌ Needs action] — [one plain sentence a non-technical reader can repeat].**
+> [What moved since the last reading and why it matters]. Biggest lever: [the single fix with the most payoff].
 
 ### Summary
-| Metric | Current | Target | Status |
-|--------|---------|--------|--------|
-| Lint Errors | X | 0 | ✅/❌ |
-| Lint Warnings | X | 0 | ✅/❌ |
-| TypeScript Errors | X | 0 | ✅/❌ |
-| Test Coverage | X% | 80% | ✅/❌ |
-| Code Duplication | X% | <2% | ✅/❌ |
-| `any` Types | X | <50 | ✅/❌ |
-| Large Files | X | 0 | ✅/❌ |
+| Metric | Current | Target | Verdict | Why it matters (business impact) |
+|--------|---------|--------|:------:|----------------------------------|
+| Lint errors | X | 0 | ✅/⚠️/❌ | Broken or unsafe code slips into the product |
+| Lint warnings | X | 0 | ✅/⚠️/❌ | Small issues accumulate into slow, risky changes |
+| TypeScript errors | X | 0 | ✅/⚠️/❌ | The type safety net has holes where bugs hide |
+| Test coverage | X% | 80% | ✅/⚠️/❌ | Untested code means regressions ship unnoticed |
+| Code duplication | X% | <2% | ✅/⚠️/❌ | One fix must be made in several places — easy to miss one |
+| `any` types | X | <50 | ✅/⚠️/❌ | Each is a spot the compiler can't catch a mistake |
+| Large files | X | 0 | ✅/⚠️/❌ | Slow to change, hard to review, easy to break |
 
 ### Top Hotspots
-1. [File/Issue]: [Description] - [Recommended action]
+1. [File/Issue]: [Description] — [Recommended action] — [payoff]
 2. ...
 
 ### Recommended Sprint

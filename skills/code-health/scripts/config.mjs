@@ -70,6 +70,13 @@ export const today = () => new Date().toISOString().slice(0, 10);
 export const bar = (s) => { const f = Math.max(0, Math.min(20, Math.round(s / 5))); return '█'.repeat(f) + '░'.repeat(20 - f); };
 // clamp((v−bad)/(good−bad)·100) — works whether higher or lower is better.
 export const norm = (v, good, bad) => Math.max(0, Math.min(100, ((v - bad) / (good - bad)) * 100));
+// Shared verdict banding for the generated interpretation layer (see
+// code-health/references/methodology.md, "Who the dashboard serves"): every
+// 0–100 score gets an explicit good / watch / act verdict + a word, so no
+// deliverable ever ships a bare number a non-technical reader can't judge.
+export const verdict = (s) => (s >= 80 ? { icon: '✅', word: 'Healthy' }
+  : s >= 60 ? { icon: '⚠️', word: 'Watch' }
+    : { icon: '❌', word: 'Act now' });
 
 export function walk(dir) {
   if (!fs.existsSync(dir)) return [];
