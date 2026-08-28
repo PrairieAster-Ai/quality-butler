@@ -3,6 +3,31 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.10.2] — 2026-08-28
+
+### Fixed
+
+- **The workflow template shipped a skill pin seven minor versions stale.**
+  `SKILLS_REF` sat on `v0.3.0` while the repo released through `v0.10.1`, so
+  every repo that copied the template and did not re-pin ran skills from before
+  no-silent-defaults, gate-liveness, duplicate-declarations and the
+  assisted-development metrics existed. This is v0.6.2's stale-copy bug with the
+  widest possible blast radius: shipped by default to everyone downstream.
+
+  The pin is now the current release tag, and `check-manifests.mjs` asserts it
+  matches the newest changelog entry, so it cannot drift again unnoticed. The
+  supply-chain comment now states the tag-versus-SHA trade-off rather than
+  implying only a SHA is acceptable.
+
+### Added
+
+- **`check-manifests.mjs --selftest`** - negative controls for the manifest
+  rules themselves, which had none: a skill on disk the manifest omits, a
+  manifest path that does not exist, a version behind the changelog, a stale
+  `SKILLS_REF`, a missing `SKILLS_REF`, each paired with a positive so the suite
+  cannot pass by having everything break. Six controls, wired into CI ahead of
+  the check they guard.
+
 ## [0.10.1] — 2026-08-25
 
 ### Fixed

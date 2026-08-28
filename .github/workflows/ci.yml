@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: manifest negative controls (every rule must fail when broken)
+        run: node scripts/check-manifests.mjs --selftest
       - name: manifests agree with the tree and the changelog
         run: node scripts/check-manifests.mjs
       - name: negative controls (every gate must fail when broken)

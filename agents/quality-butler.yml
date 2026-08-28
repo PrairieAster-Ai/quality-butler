@@ -105,12 +105,14 @@ jobs:
         # other five (code-health, code-quality, code-readability, security-audit,
         # github) plus the shared wiki-publish substrate are vendored here.
         #
-        # SUPPLY-CHAIN: pin SKILLS_REF to a reviewed commit. The butler runs with
-        # contents/PR/issues:write + the OAuth token, so fetching the live branch
-        # would let a compromised upstream execute inside it. Bump intentionally
-        # after reviewing the upstream diff.
+        # SUPPLY-CHAIN: pin SKILLS_REF to a reviewed release tag or commit SHA,
+        # never a moving branch. The butler runs with contents/PR/issues:write +
+        # the OAuth token, so fetching the live branch would let a compromised
+        # upstream execute inside it. A tag is what this template ships and what
+        # the docs recommend; replace it with the tag's commit SHA if you want a
+        # pin the upstream owner cannot move. Bump after reviewing the diff.
         env:
-          SKILLS_REF: 444b17df099d41789965e411901744cd662e86eb # pinned to quality-butler v0.3.0; bump to take updates
+          SKILLS_REF: v0.10.2 # the current quality-butler release; bump to take updates
         run: |
           git clone --filter=blob:none https://github.com/PrairieAster-Ai/quality-butler.git /tmp/qs
           git -C /tmp/qs checkout --quiet "$SKILLS_REF"
