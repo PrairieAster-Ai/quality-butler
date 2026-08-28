@@ -23,7 +23,7 @@ function hasScc() {
   catch { return false; }
 }
 if (!hasScc()) {
-  console.log('\nLanguage-agnostic size/complexity — `scc` not installed. Install it, then re-run:');
+  console.log('\nLanguage-agnostic size/complexity: `scc` not installed. Install it, then re-run:');
   console.log('  go install github.com/boyter/scc/v3@latest   # or:  brew install scc');
   process.exit(0);
 }
@@ -34,11 +34,11 @@ try {
     { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
   langs = JSON.parse(out);
 } catch (e) {
-  console.log(`\nLanguage-agnostic size/complexity — scc produced no parseable output (${(e.message || '').split('\n')[0]})`);
+  console.log(`\nLanguage-agnostic size/complexity: scc produced no parseable output (${(e.message || '').split('\n')[0]})`);
   process.exit(0);
 }
 if (!Array.isArray(langs) || !langs.length) {
-  console.log('\nLanguage-agnostic size/complexity — scc found no source under the configured `dirs`');
+  console.log('\nLanguage-agnostic size/complexity: scc found no source under the configured `dirs`');
   process.exit(0);
 }
 

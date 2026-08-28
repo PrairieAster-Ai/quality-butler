@@ -70,7 +70,7 @@ const CAPS = [
   // the wrong thing — the row below already credits the same scanner.
   ['🔒 Security', 'SAST (static analysis)',
     (ciHas(/codeql|semgrep|sonarqube|snyk code/i) || /semgrep|codeql/i.test(preCommit)) ? DONE : GAP,
-    'CodeQL, semgrep or equivalent — in CI or a git hook'],
+    'CodeQL, semgrep or equivalent: in CI or a git hook'],
   ['🔒 Security', '/security-audit per-PR (semgrep + osv)', ciHas(/security-audit/i) && /run/.test(ci) ? DONE : GAP, 'differential SAST/SCA + LLM verify on the diff'],
 
   ['📊 Code-health metrics', 'Maintainability Index', npmScript(/^mi:report/) ? DONE : GAP, ''],
@@ -90,7 +90,7 @@ const CAPS = [
   ['📚 Documentation', 'API reference published', wikiStatus('Reference-Home'), 'Reference-Home/Components/Hooks/Lib/Types'],
   ['📚 Documentation', 'Page-Anatomy (screen flows)', wikiStatus('Page-Anatomy'), 'Mermaid sequence diagrams'],
   ['📚 Documentation', 'Team pages (onboarding)', wikiStatus('Getting-Started'), 'Getting-Started + Skill-Inventory'],
-  ['📚 Documentation', 'DB schema page', usesDrizzle ? (wikiStatus('Reference-Database-Schema')) : NA, usesDrizzle ? 'gen-schema-page' : 'N/A — no Drizzle ORM'],
+  ['📚 Documentation', 'DB schema page', usesDrizzle ? (wikiStatus('Reference-Database-Schema')) : NA, usesDrizzle ? 'gen-schema-page' : 'N/A, no Drizzle ORM'],
 
   ['🤖 Butler automation', 'Weekly sweep', /quality-butler[\s\S]*cron:/.test(ci) ? DONE : GAP, 'scheduled CodeHealth + review'],
   ['🤖 Butler automation', 'Per-PR review', /quality-butler[\s\S]*pull_request/.test(ci) ? DONE : GAP, 'differential review on PRs'],
@@ -114,16 +114,16 @@ const done = counts[DONE] || 0;
 const gaps = CAPS.filter((c) => c[2] === GAP);
 const summary = `**${done} / ${applicable}** auto-detected capabilities enabled · **${gaps.length} gaps** · ${counts[manualOr('manual')] || 0} need a manual/wiki check`;
 
-console.log(`\nQuality coverage — ${done}/${applicable} enabled, ${gaps.length} gaps (${today()})`);
+console.log(`\nQuality coverage: ${done}/${applicable} enabled, ${gaps.length} gaps (${today()})`);
 for (const g of groups) {
   console.log(`  ${g}`);
   for (const [, name, status, detail] of CAPS.filter((c) => c[0] === g)) {
-    console.log(`    ${ICON[status]} ${name}${detail ? `  — ${detail}` : ''}`);
+    console.log(`    ${ICON[status]} ${name}${detail ? `: ${detail}` : ''}`);
   }
 }
 if (gaps.length) {
   console.log(`\n  GAPS to close:`);
-  for (const [, name, , detail] of gaps) console.log(`    ❌ ${name}${detail ? ` — ${detail}` : ''}`);
+  for (const [, name, , detail] of gaps) console.log(`    ❌ ${name}${detail ? `: ${detail}` : ''}`);
 }
 
 function manualOr(x) { return x; }
@@ -146,6 +146,6 @@ if (stampTargets.length) {
   if (exists(shared)) {
     execSync(`node "${shared}" "${factsFile}" ql ${stampTargets.map((t) => `"${t}"`).join(' ')}`, { stdio: 'inherit' });
   } else {
-    console.error('  (/wiki-publish not installed — wrote facts JSON; stamp manually)');
+    console.error('  (/wiki-publish not installed: wrote facts JSON; stamp manually)');
   }
 }

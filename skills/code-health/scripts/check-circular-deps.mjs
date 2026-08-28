@@ -26,7 +26,7 @@ for (const dir of DIRS) {
 }
 
 if (total) {
-  console.error(`\n${total} circular import${total === 1 ? '' : 's'} found. Break the cycle — move the shared`
+  console.error(`\n${total} circular import${total === 1 ? '' : 's'} found. Break the cycle, move the shared`
     + ' type/value into a module both sides import, or invert one dependency.');
   process.exit(1);
 }

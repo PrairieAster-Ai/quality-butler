@@ -88,5 +88,5 @@ try {
   fs.appendFileSync(OUT, row);
   console.log(`appended reading → ${OUT}`);
 } catch (e) {
-  console.log(`butler-metrics: could not write ${OUT} (${e.message}) — summary printed above.`);
+  console.log(`butler-metrics: could not write ${OUT} (${e.message}); summary printed above.`);
 }

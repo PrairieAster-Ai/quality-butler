@@ -71,11 +71,11 @@ function spread(all, n) {
 
 const all = sites();
 if (!all.length) {
-  console.log('\nMutation score: no mutable file has a colocated test — nothing to measure.\n');
+  console.log('\nMutation score: no mutable file has a colocated test, nothing to measure.\n');
   process.exit(0);
 }
 const chosen = spread(all, SAMPLE);
-console.log(`\nMutation score — ${chosen.length} of ${all.length} sites, \`${TEST_CMD}\`\n`);
+console.log(`\nMutation score: ${chosen.length} of ${all.length} sites, \`${TEST_CMD}\`\n`);
 
 const runTests = () => {
   try { execSync(TEST_CMD, { stdio: 'ignore', timeout: TIMEOUT }); return true; }
@@ -104,13 +104,13 @@ for (const [i, s] of chosen.entries()) {
   fs.writeFileSync(s.file, original);
   if (caught) killed += 1;
   else survivors.push({ ...s, code: original.split('\n')[s.line].trim().slice(0, 90) });
-  process.stdout.write(`\r  ${i + 1}/${chosen.length} — ${killed} killed, ${survivors.length} survived   `);
+  process.stdout.write(`\r  ${i + 1}/${chosen.length}: ${killed} killed, ${survivors.length} survived   `);
 }
 
 const score = Math.round((killed / chosen.length) * 100);
 console.log(`\n\n  score ${score}%  (${killed} killed / ${chosen.length})\n`);
 if (survivors.length) {
-  console.log('  Survived — the code changed here and the tests stayed green:');
+  console.log('  Survived: the code changed here and the tests stayed green:');
   for (const s of survivors.slice(0, 12)) {
     console.log(`    ${s.file}:${s.line + 1}  [${s.mutator.name}]`);
     console.log(`      ${s.code}`);

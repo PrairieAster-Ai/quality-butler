@@ -54,7 +54,7 @@ try {
       const [dir, message] = args;
       run('git add -A', { cwd: dir });
       const status = run('git status --porcelain', { cwd: dir }).trim();
-      if (!status) { console.log('  wiki already current — nothing to push'); break; }
+      if (!status) { console.log('  wiki already current, nothing to push'); break; }
       run(`git commit -m ${JSON.stringify(message)}`, { cwd: dir });
       run('git push', { cwd: dir, stdio: 'inherit' });
       console.log('  pushed wiki');

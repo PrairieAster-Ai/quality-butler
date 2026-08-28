@@ -30,7 +30,7 @@ const ours = (s) => /^(apps|packages|src)\//.test(s) || DIRS.some((d) => s.start
 const modules = (data.modules ?? []).filter((m) => ours(m.source) && !m.coreModule && !m.couldNotResolve);
 const folders = (data.folders ?? []).filter((f) => ours(f.name) && f.moduleCount > 1);
 
-if (!modules.length) { console.log('\nCoupling / fan-out — no modules resolved (check `dirs` / tsconfig)'); process.exit(0); }
+if (!modules.length) { console.log('\nCoupling / fan-out, no modules resolved (check `dirs` / tsconfig)'); process.exit(0); }
 
 const fanOuts = modules.map((m) => (m.dependencies ?? []).length);
 const maxFanOut = Math.max(...fanOuts);
@@ -38,9 +38,9 @@ const highCoupling = modules.filter((m) => (m.dependencies ?? []).length > 10).l
 const meanInstab = modules.reduce((s, m) => s + (m.instability ?? 0), 0) / modules.length;
 const pct = (x) => `${Math.round((x ?? 0) * 100)}%`;
 
-console.log(`\nCoupling / fan-out — ${modules.length} modules`);
+console.log(`\nCoupling / fan-out: ${modules.length} modules`);
 console.log(`  max fan-out ${maxFanOut} · modules importing >10 of ours: ${highCoupling} · mean instability ${pct(meanInstab)}`);
-console.log('  highest fan-out (most-coupled — hardest to change in isolation):');
+console.log('  highest fan-out (most-coupled: hardest to change in isolation):');
 for (const m of [...modules].sort((a, b) => (b.dependencies ?? []).length - (a.dependencies ?? []).length).slice(0, 8)) {
   console.log(`    Ce=${String((m.dependencies ?? []).length).padStart(2)} I=${pct(m.instability).padStart(4)}  ${m.source}`);
 }

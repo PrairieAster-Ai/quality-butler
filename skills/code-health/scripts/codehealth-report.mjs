@@ -175,7 +175,7 @@ const gradeOf = (n) => (n >= 90 ? 'A' : n >= 80 ? 'B' : n >= 70 ? 'C' : n >= 60 
  * weight and printing a grade is not a partial answer, it is a wrong one.
  */
 const partial = unmeasured.length > 0;
-const grade = partial ? '—' : gradeOf(score);
+const grade = partial ? '-' : gradeOf(score);
 
 // ── Interpretation layer (business meaning + relative context) ────────────────
 // Promotes the dashboard's "metrics by business outcome / why it's worth money"
@@ -207,7 +207,7 @@ const nAdv = sevCritical + sevHigh + sevModerate + sevLow;
 const META = {
   'Documentation': {
     outcome: 'keyperson', plain: 'Documentation',
-    soWhat: 'New teammates find how things work without interrupting the author — smaller bus factor.',
+    soWhat: 'New teammates find how things work without interrupting the author; a smaller bus factor.',
     benchmark: 'target: 100% TSDoc on the public API',
     action: `document the undocumented public APIs (now ${r1(docPct)}%)`,
     payoff: 'faster onboarding, less key-person dependency',
@@ -231,14 +231,14 @@ const META = {
   'Resilience (worst files)': {
     outcome: 'risk', plain: 'Worst-file safety',
     soWhat: `The hardest-to-change 5% of files sit at MI ${r1(p5Mi)} or below, and the very worst `
-      + `scores ${r1(minMi)} — ${minMi >= 20 ? 'still workable' : 'a landmine when it must change under deadline'}.`,
+      + `scores ${r1(minMi)}: ${minMi >= 20 ? 'still workable' : 'a landmine when it must change under deadline'}.`,
     benchmark: "MI ≥20 is Microsoft's 'maintainable' threshold",
     action: `split or add tests to the worst file (MI ${r1(minMi)})`,
     payoff: 'the riskiest edit gets safer',
   },
   'Type & size safety': {
     outcome: 'throughput', plain: 'Type & size safety',
-    soWhat: `${anyCount} untyped value(s) and ${over500} oversized file(s) — each is a place bugs hide and changes slow down.`,
+    soWhat: `${anyCount} untyped value(s) and ${over500} oversized file(s), each is a place bugs hide and changes slow down.`,
     benchmark: 'rule of thumb: files < 500 LOC, minimal `any`',
     action: `type the ${anyCount} \`any\`(s) and split the ${over500} file(s) > 500 LOC`,
     payoff: 'fewer runtime surprises, easier reviews',
@@ -247,7 +247,7 @@ const META = {
     outcome: 'risk', plain: 'Dependency security',
     soWhat: nAdv === 0
       ? 'No known-vulnerable dependencies shipping.'
-      : `${nAdv} dependency advisor${nAdv === 1 ? 'y' : 'ies'} (${sevCritical}C/${sevHigh}H) — known vulnerabilities in your supply chain.`,
+      : `${nAdv} dependency advisor${nAdv === 1 ? 'y' : 'ies'} (${sevCritical}C/${sevHigh}H): known vulnerabilities in your supply chain.`,
     benchmark: 'target: 0 critical/high advisories',
     action: `patch the ${nAdv} dependency advisor${nAdv === 1 ? 'y' : 'ies'}`,
     payoff: 'closes known attack surface',
@@ -267,7 +267,7 @@ function dimBullet(d) {
   const dl = deltaFor(d.key, d.score);
   const m = META[d.key];
   const trend = dl.arrow ? ` ${dl.arrow}${dl.text}` : dl.text === 'new' ? ' (new)' : '';
-  return `- ${v.icon} **${m.plain}** — ${v.word}${trend}. ${m.soWhat} <sub>${d.raw} · _${m.benchmark}_</sub>`;
+  return `- ${v.icon} **${m.plain}**: ${v.word}${trend}. ${m.soWhat} <sub>${d.raw} · _${m.benchmark}_</sub>`;
 }
 
 // ch:outcomes — the generated "Metrics by business outcome" section.
@@ -287,8 +287,8 @@ const VERDICT_SENTENCE = {
   A: 'The codebase is in strong, well-governed shape.',
   B: 'The codebase is healthy, with a few areas worth watching.',
   C: 'The codebase is serviceable but carries real maintenance drag.',
-  D: 'The codebase is fragile — change is risky and slow.',
-  F: 'The codebase is in critical shape — a live risk to delivery.',
+  D: 'The codebase is fragile: change is risky and slow.',
+  F: 'The codebase is in critical shape: a live risk to delivery.',
 };
 function trendWord(scoreDelta) {
   if (scoreDelta === null) return 'first reading';
@@ -302,7 +302,7 @@ function trendWord(scoreDelta) {
 function buildExec() {
   // Say the reading is incomplete. Do not characterize a codebase you did not measure.
   if (partial) {
-    return `**🩺 CodeHealth: incomplete reading — ${coveragePct}% of the weight measured.**\n\n`
+    return `**🩺 CodeHealth: incomplete reading: ${coveragePct}% of the weight measured.**\n\n`
       + `- ⚠ **No grade.** ${unmeasured.map((d) => d.key).join(', ')} produced no observation, so there is nothing to score them on.\n`
       + '- 🔧 **Next:** run the producers (`run-all.mjs` sequences them) and take the reading again.';
   }
@@ -315,7 +315,7 @@ function buildExec() {
   const weakest = sorted[0], strongest = sorted[sorted.length - 1];
   const wv = verdict(weakest.score);
   return [
-    `**🩺 CodeHealth: ${grade} · ${r1(score)}/100 — ${trendWord(scoreDelta)}.** ${VERDICT_SENTENCE[grade]}`,
+    `**🩺 CodeHealth: ${grade} · ${r1(score)}/100: ${trendWord(scoreDelta)}.** ${VERDICT_SENTENCE[grade]}`,
     '',
     `- 🚦 **Overall:** grade ${grade} (${r1(score)}/100), ${deltaClause}.`,
     `- ${wv.icon} **Watch:** ${META[weakest.key].plain} (${r1(weakest.score)}/100). ${META[weakest.key].soWhat}`,
@@ -357,7 +357,7 @@ function chartNote(key) {
   }
 }
 function chartMarkdown() {
-  const rows = ['```text', `${' '.repeat(28)}weight  score (0–100)`];
+  const rows = ['```text', `${' '.repeat(28)}weight  score (0-100)`];
   for (const d of dims) {
     const note = chartNote(d.key);
     rows.push(DISPLAY[d.key].padEnd(21) + `${Math.round(d.weight * 100)}%`.padStart(4) + '   '
@@ -407,7 +407,7 @@ function buildTrend(n = 12) {
     }
   } catch { /* fall through to insufficient-history */ }
 
-  if (series.length < 2) return 'insufficient history — need ≥2 readings to plot a trend';
+  if (series.length < 2) return 'insufficient history: need ≥2 readings to plot a trend';
 
   const scores = series.map((p) => p.score);
   const first = scores[0], last = scores[scores.length - 1];
@@ -503,11 +503,11 @@ function pieMarkdown() {
 }
 
 console.log(partial
-  ? `\n┌─ CodeHealth: PARTIAL READING — no grade (${coveragePct}% of the weight measured)`
+  ? `\n┌─ CodeHealth: PARTIAL READING, no grade (${coveragePct}% of the weight measured)`
   : `\n┌─ CodeHealth: ${r1(score)} / 100  (grade ${grade}) ─ a weighted blend of the dashboard's dimensions`);
 for (const d of dims) {
-  const cell = d.measured ? String(r1(d.score)).padStart(5) : '    —';
-  const note = d.measured ? `(${d.raw})` : '(NOT MEASURED — no input; excluded from the score)';
+  const cell = d.measured ? String(r1(d.score)).padStart(5) : '    -';
+  const note = d.measured ? `(${d.raw})` : '(NOT MEASURED, no input; excluded from the score)';
   console.log(`│  ${d.key.padEnd(24)} ${cell}  × ${d.weight.toFixed(2)}   ${note}`);
 }
 if (unmeasured.length) {

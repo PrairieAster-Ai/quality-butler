@@ -46,7 +46,7 @@ const median = (xs) => (xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(xs.
 // commit ever made under a label claiming three months. Validate the form here
 // rather than trying to detect the damage afterwards.
 if (!/^\d+\s+(day|week|month|year)s?\s+ago$/i.test(SINCE) && Number.isNaN(Date.parse(SINCE))) {
-  console.error(`\n✗ "${SINCE}" is not a window git will honour — it would return the whole history.`);
+  console.error(`\n✗ "${SINCE}" is not a window git will honour: it would return the whole history.`);
   console.error('  Use "90 days ago", or an ISO date like "2026-01-01".\n');
   process.exit(1);
 }
@@ -121,7 +121,7 @@ const ratio = test > 0 ? (prod / test) : Infinity;
 const failRate = Math.round((fixes.length / commits.length) * 100);
 const ttd = Math.round(median(ages) * 10) / 10;
 
-console.log(`\nDelivery metrics — ${commits.length} commits since ${SINCE}\n`);
+console.log(`\nDelivery metrics: ${commits.length} commits since ${SINCE}\n`);
 console.log(`  verification ratio   ${test > 0 ? `${ratio.toFixed(1)} : 1` : 'no test lines changed at all'}`);
 console.log(`                       ${prod} non-test lines / ${test} test lines`);
 console.log(`  change-failure rate  ${failRate}%  (${fixes.length} of ${commits.length} commits fix or revert)`);

@@ -93,7 +93,7 @@ for (const [k, co] of pairCo) {
 coupled.sort((x, y) => y.degree - x.degree || y.co - x.co);
 
 const pct = (d) => `${Math.round(d * 100)}%`;
-console.log(`\nChange coupling — files that change together over the last 365 days (${used} commits ≤ ${MAX_FILES} files)`);
+console.log(`\nChange coupling: files that change together over the last 365 days (${used} commits ≤ ${MAX_FILES} files)`);
 console.log(`  ${coupled.length} coupled pair(s) (≥ ${MIN_CO} co-changes, each file ≥ ${MIN_REV} revs, ≥ ${pct(MIN_DEGREE)} degree)`);
 console.log('  strongest coupling (consider why these always move together):');
 // Twelve is enough to read; the whole list is what you need when deciding

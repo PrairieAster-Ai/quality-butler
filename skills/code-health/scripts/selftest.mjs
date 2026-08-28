@@ -70,7 +70,7 @@ check('a fully measured repo produces a grade', () => {
 check('a dimension with no input is excluded, not defaulted', () => {
   const { out } = rollup(fixture({ withSecurity: false }), ['--no-write']);
   assert(out.includes('NOT MEASURED'), 'missing security history should read NOT MEASURED');
-  assert(/Security \(deps\)\s+—/.test(out), 'Security should show no score, got:\n' + out.slice(0, 600));
+  assert(/Security \(deps\)\s+-/.test(out), 'Security should show no score, got:\n' + out.slice(0, 600));
 });
 
 check('a partial reading gets no grade', () => {

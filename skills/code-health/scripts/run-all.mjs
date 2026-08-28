@@ -34,7 +34,7 @@ if (fs.existsSync(pinned) && path.resolve(pinned) !== path.resolve(DIR) && !argv
   Run the pinned copy, or pass --any-copy if you know the builds match.`);
   process.exit(1);
 }
-console.log(`code-health — running ${DIR}\n`);
+console.log(`code-health: running ${DIR}\n`);
 
 // Producers first (each independent), roll-up last (reads their TSVs).
 const producers = [
@@ -51,7 +51,7 @@ for (const p of producers) {
   try {
     execSync(`node "${path.join(DIR, p + '.mjs')}" ${passthru}`, { stdio: 'inherit' });
   } catch (e) {
-    console.error(`  ⚠ ${p} failed (${e.message?.split('\n')[0]}) — continuing; its dimension will use defaults`);
+    console.error(`  ⚠ ${p} failed (${e.message?.split('\n')[0]}), continuing; its dimension will use defaults`);
   }
 }
 execSync(`node "${path.join(DIR, 'codehealth-report.mjs')}" ${passthru}`, { stdio: 'inherit' });

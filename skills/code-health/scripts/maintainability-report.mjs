@@ -100,7 +100,7 @@ const yellow = mis.filter((x) => x >= 10 && x < 20).length;
 const red = mis.filter((x) => x < 10).length;
 const worst = [...metrics].sort((a, b) => a.mi - b.mi).slice(0, 8);
 
-console.log(`\nMaintainability Index — ${files.length} files (${DIRS.join(', ')})`);
+console.log(`\nMaintainability Index: ${files.length} files (${DIRS.join(', ')})`);
 console.log(`  mean ${r1(mean)} · median ${r1(median)} · p5 ${r1(p5)} · min ${r1(sorted[0])}`);
 console.log(`  bands: 🟢 green (>=20) ${green} · 🟡 yellow (10-19) ${yellow} · 🔴 red (<10) ${red}`);
 console.log('  lowest MI (size/complexity hotspots):');

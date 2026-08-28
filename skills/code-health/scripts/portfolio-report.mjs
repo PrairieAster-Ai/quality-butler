@@ -89,20 +89,20 @@ const rows = [];
 for (const entry of entries) {
   const name = entry.name || (entry.path ? path.basename(path.resolve(entry.path)) : '(unnamed)');
   const stampPath = resolveStamp(entry);
-  if (!stampPath || !fs.existsSync(stampPath)) { console.warn(`⚠ ${name}: no stamp at ${stampPath || '(unresolved)'} — skipping`); continue; }
+  if (!stampPath || !fs.existsSync(stampPath)) { console.warn(`⚠ ${name}: no stamp at ${stampPath || '(unresolved)'}, skipping`); continue; }
   let s;
   try { s = JSON.parse(fs.readFileSync(stampPath, 'utf8')); }
-  catch (e) { console.warn(`⚠ ${name}: unreadable stamp ${stampPath} (${e.message}) — skipping`); continue; }
+  catch (e) { console.warn(`⚠ ${name}: unreadable stamp ${stampPath} (${e.message}), skipping`); continue; }
   const { grade, score } = parseBadge(s.badge);
   rows.push({
     name, grade, score,
-    top_hotspot: s.top_hotspot || '—',
-    doc_pct: s.doc_pct != null ? `${s.doc_pct}%` : '—',
-    security: s.security != null ? String(s.security) : '—',
+    top_hotspot: s.top_hotspot || '-',
+    doc_pct: s.doc_pct != null ? `${s.doc_pct}%` : '-',
+    security: s.security != null ? String(s.security) : '-',
   });
 }
 
-if (!rows.length) { console.error('portfolio: no readable stamps — nothing to report'); process.exit(0); }
+if (!rows.length) { console.error('portfolio: no readable stamps, nothing to report'); process.exit(0); }
 
 // Worst first (ascending score; nulls last).
 rows.sort((a, b) => (a.score ?? Infinity) - (b.score ?? Infinity));
@@ -117,7 +117,7 @@ md.push('| Repo | Status | Grade | Score | Top hotspot | Doc% | Security |');
 md.push('|---|:--|:--:|--:|---|--:|--:|');
 for (const r of rows) {
   const v = rowVerdict(r);
-  md.push(`| ${r.name} | ${v.icon} ${v.word} | ${r.grade} | ${r.score != null ? r.score : '—'} | ${r.top_hotspot} | ${r.doc_pct} | ${r.security} |`);
+  md.push(`| ${r.name} | ${v.icon} ${v.word} | ${r.grade} | ${r.score != null ? r.score : '-'} | ${r.top_hotspot} | ${r.doc_pct} | ${r.security} |`);
 }
 const table = md.join('\n');
 console.log(`\n${table}\n`);
@@ -174,13 +174,13 @@ const worst = scored[0]; // rows are worst-first
 const execLine = [
   `**🗂️ Portfolio health: ${rows.length} repo${rows.length === 1 ? '' : 's'} · mean ${meanGrade} · ${meanScore ?? 'n/a'}/100.**`,
   scored.length
-    ? ` ${healthy} healthy, ${watch} to watch, ${act} needing action` + (worst && verdict(worst.score).word !== 'Healthy' ? ` — start with **${worst.name}** (${worst.grade} · ${worst.score}).` : '.')
+    ? ` ${healthy} healthy, ${watch} to watch, ${act} needing action` + (worst && verdict(worst.score).word !== 'Healthy' ? `. Start with **${worst.name}** (${worst.grade} · ${worst.score}).` : '.')
     : ' No graded repos yet.',
 ].join('');
 const exec = [
   execLine,
   '',
-  '<sub>Grades are absolute (A ≥90 … F <60), benchmarked against the same documented anchors every repo uses — comparable across the portfolio and over time. Sorted worst-first so attention lands where it pays back most.</sub>',
+  '<sub>Grades are absolute (A ≥90 … F <60), benchmarked against the same documented anchors every repo uses, comparable across the portfolio and over time. Sorted worst-first so attention lands where it pays back most.</sub>',
 ].join('\n');
 console.log(`\n${exec}\n`);
 

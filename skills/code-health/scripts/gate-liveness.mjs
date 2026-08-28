@@ -130,10 +130,10 @@ function ciSteps() {
 const wf = workflowText();
 const orphans = declaredGates().filter((g) => !invoked(g.name, g.cmd, wf));
 
-console.log(`\nGate liveness — last ${LIMIT} CI runs\n`);
+console.log(`\nGate liveness: last ${LIMIT} CI runs\n`);
 
 if (orphans.length) {
-  console.log('  Gate-shaped scripts no workflow runs — dead, or deliberately manual:');
+  console.log('  Gate-shaped scripts no workflow runs: dead, or deliberately manual:');
   for (const g of orphans) console.log(`    ✗ ${g.name}  (${g.pkg})`);
   console.log('');
 } else {
@@ -143,7 +143,7 @@ if (orphans.length) {
 const steps = ciSteps();
 let unproven = [];
 if (!steps) {
-  console.log('  (no CI history available — needs `gh` authenticated against a GitHub repo)');
+  console.log('  (no CI history available, needs `gh` authenticated against a GitHub repo)');
 } else {
   const rows = [...steps.entries()]
     .map(([name, e]) => ({ name, ...e }))
@@ -155,10 +155,10 @@ if (!steps) {
   console.log(`  ${'step'.padEnd(w)}  ran  failed  last red`);
   for (const r of rows) {
     const mark = r.failed > 0 ? '✓' : (r.ran >= UNPROVEN_AFTER ? '⚠' : '·');
-    console.log(`  ${mark} ${r.name.padEnd(w - 2)} ${String(r.ran).padStart(4)}  ${String(r.failed).padStart(6)}  ${r.lastFail || '—'}`);
+    console.log(`  ${mark} ${r.name.padEnd(w - 2)} ${String(r.ran).padStart(4)}  ${String(r.failed).padStart(6)}  ${r.lastFail || '-'}`);
   }
   console.log(`\n  ✓ ${proven.length} proven (seen to fail, so seen to discriminate)`);
-  console.log(`  ⚠ ${unproven.length} unproven (${UNPROVEN_AFTER}+ runs, never red — no evidence either way)`);
+  console.log(`  ⚠ ${unproven.length} unproven (${UNPROVEN_AFTER}+ runs, never red, no evidence either way)`);
   if (unproven.length) {
     console.log('\n  An unproven gate is not a broken one. It is one you have nothing on.');
     console.log('  Write it a negative control: plant the failure it claims to catch and');

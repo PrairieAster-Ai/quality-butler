@@ -18,7 +18,7 @@ import { hist } from './config.mjs';
 const STAMP = hist('codehealth-stamp.json');
 const targets = process.argv.slice(2);
 if (!targets.length) { console.error('usage: stamp-codehealth.mjs <file.md>...'); process.exit(1); }
-if (!fs.existsSync(STAMP)) { console.error(`${STAMP} missing — run the codehealth report first`); process.exit(1); }
+if (!fs.existsSync(STAMP)) { console.error(`${STAMP} missing: run the codehealth report first`); process.exit(1); }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const shared = path.resolve(here, '../../wiki-publish/scripts/stamp.mjs');
@@ -44,5 +44,5 @@ if (fs.existsSync(shared)) {
     if (out !== src) { fs.writeFileSync(f, out); stamped++; console.log(`  stamped ${f}`); }
     else console.log(`  already current: ${f}`);
   }
-  console.log(`\nCodeHealth ${s.badge} · ${s.files} files · ${s.loc} LOC — ${stamped} file(s) updated`);
+  console.log(`\nCodeHealth ${s.badge} · ${s.files} files · ${s.loc} LOC: ${stamped} file(s) updated`);
 }

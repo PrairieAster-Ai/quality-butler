@@ -38,7 +38,7 @@ try {
   git('fetch', '--depth', '1', 'origin', BRANCH);
   remoteFiles = git('ls-tree', '--name-only', 'FETCH_HEAD', `${DIR}/`).split('\n').filter(Boolean);
 } catch {
-  console.error(`No \`${BRANCH}\` branch yet — it is created by the first sweep that persists a reading.`);
+  console.error(`No \`${BRANCH}\` branch yet: it is created by the first sweep that persists a reading.`);
   process.exit(CHECK ? 0 : 1);
 }
 
@@ -52,7 +52,7 @@ if (CHECK) {
   }
   console.log(`\n  ${same} in sync · ${differ} diverged · ${onlyRemote} only on ${BRANCH}`);
   if (differ) {
-    console.error(`\n✗ Two histories. The one on ${BRANCH} is canonical — CI reads and writes it,`);
+    console.error(`\n✗ Two histories. The one on ${BRANCH} is canonical: CI reads and writes it,`);
     console.error('  and cannot write the default branch. Run without --check to take it.');
     process.exit(1);
   }
@@ -67,4 +67,4 @@ for (const f of remoteFiles) {
   console.log(`  ${f}`);
 }
 console.log(`\n✓ restored ${remoteFiles.length} file(s) from ${BRANCH}. Readings you take locally are`);
-console.log('  scratch until a sweep persists them — the branch is the record.');
+console.log('  scratch until a sweep persists them; the branch is the record.');

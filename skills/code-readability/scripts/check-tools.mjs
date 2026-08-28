@@ -46,7 +46,7 @@ for (const r of results) {
 }
 
 if (!missing.length) {
-  console.log('\n✓ doc tool layer present — generate/publish will produce real output.');
+  console.log('\n✓ doc tool layer present: generate/publish will produce real output.');
   process.exit(0);
 }
 

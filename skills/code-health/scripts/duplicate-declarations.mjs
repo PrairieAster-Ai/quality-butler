@@ -94,7 +94,7 @@ const dupes = [...decls.entries()]
 const drifted = dupes.filter((d) => d.drifted);
 const crossLayer = dupes.filter((d) => d.crossLayer);
 
-console.log(`\nDuplicate exported declarations — ${DIRS.join(', ')}\n`);
+console.log(`\nDuplicate exported declarations: ${DIRS.join(', ')}\n`);
 if (!dupes.length) {
   console.log('  ✓ every exported name is declared exactly once\n');
 } else {
