@@ -218,6 +218,27 @@ check('delivery metrics refuse a window git silently ignored', () => {
   assert(/not a window git will honour|no commits/.test(out), 'expected a refusal, got:\n' + out.slice(0, 300));
 });
 
+check('dead-code reporting refuses rather than reporting a clean repo', () => {
+  const d = fixture();
+  let out = '';
+  // **The failure mode this whole skill exists to catch.** knip cannot run in a
+  // directory with no package.json, and the honest answer is to say so. Printing
+  // "0 findings" would be a green check measuring nothing — and the first version
+  // of this script did the mirror image of it, reporting "could not run" against
+  // a knip that had run perfectly, because it could not parse the dotenv notice
+  // knip prints above its JSON.
+  try { out = execFileSync('node', [path.join(DIR, 'dead-code-report.mjs'), '--no-write'], { cwd: d, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }); }
+  catch (e) { out = (e.stdout || '') + (e.stderr || ''); }
+  assert(/could not run/.test(out), 'expected a refusal, got:\n' + out.slice(0, 300));
+  assert(!/0 findings/.test(out), 'reported a clean repo it never managed to read');
+});
+
+check('dead-code parsing survives the notice knip prints above its JSON', () => {
+  // Colocated unit test, run here so CI covers the parser that broke twice.
+  execFileSync('node', ['--test', path.join(DIR, 'dead-code-report.test.mjs')],
+    { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+});
+
 let failed = 0;
 for (const [ok, name] of results) { console.log(`  ${ok ? '✓' : '✗'} ${name}`); if (!ok) failed += 1; }
 console.log(`\n${results.length - failed}/${results.length} negative controls passing`);

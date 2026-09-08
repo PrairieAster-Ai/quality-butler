@@ -3,6 +3,53 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.11.0] - 2026-09-08
+
+### Added
+
+- **`dead-code-report.mjs` asks the question none of the other measures ask:
+  should this code exist at all.** Every other metric in code-health judges
+  whether what exists is any good. Nothing asked whether it should be here, and
+  that is the gap assistance widens fastest: it adds code readily and removes it
+  almost never, and nothing about the residue is red. It compiles, it lowers no
+  score, and the next reader treats it as meaningful.
+
+  `noUnusedLocals` does not cover it. An unused *local* is a compiler error; an
+  unused *export* is a public API with no callers, which is indistinguishable
+  from a public API whose callers are elsewhere. A session that extracts a
+  helper, changes its mind, and leaves the export behind produces one every
+  time. Wraps `knip` and trends the count, so the question becomes "is this
+  getting worse" rather than "does anybody feel like running knip today".
+
+  **The ignore-pattern count is recorded beside the findings.** Every ignored
+  path is code the detector was told not to read, and an ignore added to quiet
+  one false positive stays for years: a falling dead-code count next to a rising
+  ignore count is not an improvement, and the reader should be able to see that
+  trade being made.
+
+  Measured against a real repo on first run: 373 findings, of which most of the
+  74 "unimported files" were one-off scripts, which is the ignore-list pressure
+  the metric is designed to make visible rather than absorb.
+
+- **A colocated unit test for the report parser, plus two negative controls.**
+  `parseReport` shipped two bugs in a row on one afternoon and both presented as
+  the detector working: parsing knip's whole stdout threw, so it reported "could
+  not run" against a knip that had run perfectly; then parsing from the first
+  `{` landed inside knip's own dotenv tip and threw again, with a JSON position
+  that pointed nowhere. Neither was found by reading it.
+
+  The selftest now asserts the script refuses, rather than reporting a clean
+  repo, where knip cannot run: a detector that cannot read its tool and reports
+  zero findings is indistinguishable from a healthy codebase, which is the exact
+  failure `gate-liveness.mjs` exists for.
+
+### Fixed
+
+- **`dead-code-report.mjs` no longer shells out on import.** Its own test file
+  imports `parseReport`, and until a run-directly guard existed that import
+  fired a real `knip` run in whatever directory the test happened to be in,
+  writing a history row into an unrelated repo if it succeeded.
+
 ## [0.10.2] — 2026-08-28
 
 ### Fixed
