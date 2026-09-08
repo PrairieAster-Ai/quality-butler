@@ -41,6 +41,9 @@ const producers = [
   'maintainability-report', 'complexity-report', 'hotspot-report',
   'coupling-report', 'change-coupling-report', 'duplication-report',
   'security-report', 'coverage-report', 'duplicate-declarations', 'delivery-metrics',
+  // Asks the question none of the others ask: should this exist at all. Cheap —
+  // one `knip` pass — and it degrades to a one-line notice where knip cannot run.
+  'dead-code-report',
   // Last because it is the slow one: roughly one API call per CI run examined.
   // Degrades to a one-line notice when `gh` is absent or unauthenticated.
   'gate-liveness',
