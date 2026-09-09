@@ -107,6 +107,39 @@ check('appendHistory refuses a row narrower than its header', () => {
   assert(fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).length === 2, 'the bad row must not be appended');
 });
 
+
+check('appendHistory refuses a header that renames rather than widens', () => {
+  // **The other way a header can differ, and the dangerous one.** The widening
+  // branch handles a producer adding a column. When the columns are *replaced*
+  // — a repo-local script superseded by this one, its trend file outliving it —
+  // appending under the old header produces a well-formed file every reader
+  // misreads: the first value answers to the first old column name.
+  //
+  // Real case: a coverage history whose pre-migration schema was
+  // `web_lines · web_branches · api_lines · api_branches` took a new
+  // `statements · branches` row, and 48.8 — the API's — read as the web's,
+  // whose real figure was 3.8.
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'ch-hist-'));
+  const f = path.join(d, 'code-health', 't-history.tsv');
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  const before = 'date\tweb_lines\tweb_branches\tapi_lines\tapi_branches\n2026-08-17\t2.2\t46.2\t20.3\t86.5\n';
+  fs.writeFileSync(f, before);
+  let threw = false;
+  try { appendHistory(f, 'date\tstatements\tbranches\n', '2026-09-09\t48.8\t92.6\n'); } catch { threw = true; }
+  assert(threw, 'a header naming different columns must be refused');
+  assert(fs.readFileSync(f, 'utf8') === before, 'the file must be left exactly as it was');
+});
+
+check('appendHistory accepts an unchanged header', () => {
+  // The guard must not refuse the ordinary case, which is every normal reading.
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'ch-hist-'));
+  const f = path.join(d, 'code-health', 't-history.tsv');
+  fs.mkdirSync(path.dirname(f), { recursive: true });
+  fs.writeFileSync(f, 'date\ta\tb\n2026-01-01\t1\t2\n');
+  appendHistory(f, 'date\ta\tb\n', '2026-01-02\t3\t4\n');
+  assert(fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).length === 3, 'the row should have been appended');
+});
+
 check('appendHistory still widens when a producer adds a column', () => {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), 'ch-hist-'));
   const f = path.join(d, 'code-health', 't-history.tsv');

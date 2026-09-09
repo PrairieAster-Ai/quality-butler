@@ -3,6 +3,29 @@
 All notable changes to this repo are documented here. Format follows
 Keep a Changelog; versioning is Semantic Versioning.
 
+## [0.11.1] - 2026-09-09
+
+### Fixed
+
+- **`appendHistory` appended under a header naming different columns, and every
+  reader misread the result.** The widening branch handles a producer *adding* a
+  column. The other case — the columns being renamed or replaced, which happens
+  when a repo-local script is superseded by this one and its trend file outlives
+  it — fell through to a plain append. The file still parses, the row is
+  well-formed, and readers key on header position, so the first value silently
+  answers to the first old column name.
+
+  Found enabling coverage on a repo whose pre-migration history was
+  `web_lines · web_branches · api_lines · api_branches`. A new
+  `statements · branches` row landed as **web coverage of 48.8%** when 48.8 was
+  the API's and the web's was 3.8. Nothing about the file looked wrong.
+
+  It now refuses and names both headers, leaving the file exactly as it was.
+  That costs one reading and a manual retirement of the stale file; accepting
+  cost a trend nobody could tell was wrong. This is the same failure the
+  narrower-*row* guard immediately below it was written for, on the header
+  instead of the row.
+
 ## [0.11.0] - 2026-09-08
 
 ### Added
