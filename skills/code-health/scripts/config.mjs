@@ -103,6 +103,22 @@ export const tryExec = (cmd) => {
   catch (e) { return { ok: false, out: `${e.stdout || ''}${e.stderr || ''}` }; }
 };
 
+/**
+ * Do two headers name the same columns, in the same order?
+ *
+ * Compared as names rather than counts: two five-column headers can still be
+ * two different measures, and that is exactly the case worth refusing.
+ *
+ * @param a - One header line, without its newline.
+ * @param b - The other.
+ * @returns True when every column name matches.
+ */
+function sameColumns(a, b) {
+  const x = a.split('\t');
+  const y = b.split('\t');
+  return x.length === y.length && x.every((c, i) => c === y[i]);
+}
+
 export function appendHistory(file, header, row) {
   if (!WRITE) return;
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -129,6 +145,28 @@ export function appendHistory(file, header, row) {
         if (short > 0) lines[i] += '\t'.repeat(short);
       }
       fs.writeFileSync(file, lines.join('\n'));
+    } else if (!sameColumns(want, lines[0])) {
+      // **A header that is not a widening is a different measure wearing the
+      // same filename.** The branch above handles a producer adding a column.
+      // This is the other way a header can differ: the columns were *renamed or
+      // replaced*, which happens when a repo-local script is superseded by this
+      // one and the trend file outlives it.
+      //
+      // Appending under the old header is the worst available outcome. The row
+      // is well-formed, the file still parses, and every reader keys on header
+      // position — so the first value silently answers to the first old column
+      // name. Seen with a coverage history whose pre-migration schema was
+      // `web_lines · web_branches · api_lines · api_branches`: a new
+      // `statements · branches` row landed as web coverage of 48.8%, when 48.8
+      // was the API's and the web's was 3.8.
+      //
+      // Refusing costs one reading and one manual step. Accepting costs a trend
+      // nobody can tell is wrong.
+      throw new Error(
+        `${path.basename(file)}: header is "${lines[0]}" but this producer writes `
+        + `"${want}". These are different measures sharing a filename, not a new column. `
+        + 'Retire or rename the old history file; appending would relabel the old rows.',
+      );
     }
   }
   // **A narrower row means an older copy of this skill is running.** The block

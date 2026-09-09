@@ -112,7 +112,7 @@ jobs:
         # the docs recommend; replace it with the tag's commit SHA if you want a
         # pin the upstream owner cannot move. Bump after reviewing the diff.
         env:
-          SKILLS_REF: v0.11.0 # the current quality-butler release; bump to take updates
+          SKILLS_REF: v0.11.1 # the current quality-butler release; bump to take updates
         run: |
           git clone --filter=blob:none https://github.com/PrairieAster-Ai/quality-butler.git /tmp/qs
           git -C /tmp/qs checkout --quiet "$SKILLS_REF"
